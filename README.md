@@ -149,10 +149,16 @@ src/lib
 PostgreSQL / Supabase (Prisma)
 ```
 
-## 🤝 Contributing
+## 🤝 Contributing & community
 
 PRs are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for the dev setup and
 how to add a payment gateway or server integration (usually < 100 lines).
+Check the [good first issues](https://github.com/solomon2773/openhosting/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
+for scoped starting points, or ask questions in
+[Discussions](https://github.com/solomon2773/openhosting/discussions).
+
+⭐ **If OpenHosting looks useful to you, a star helps other hosting
+providers find it.**
 
 ## 📄 License
 
