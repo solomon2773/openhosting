@@ -1,0 +1,454 @@
+// OpenHosting domain model — Postgres (works with Supabase; DIRECT_URL is used
+// for migrations when connecting through Supabase's pooler).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ── Users & auth ────────────────────────────────────────────────────────────
+
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  password        String
+  firstName       String
+  lastName        String
+  companyName     String?
+  address         String?
+  city            String?
+  state           String?
+  zip             String?
+  country         String?
+  phone           String?
+  credits         Decimal   @default(0) @db.Decimal(12, 2)
+  emailVerifiedAt DateTime?
+  totpSecret      String?
+  totpEnabledAt   DateTime?
+  roleId          String?
+  role            Role?     @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  sessions        Session[]
+  orders          Order[]
+  services        Service[]
+  invoices        Invoice[]
+  tickets         Ticket[]
+  ticketMessages  TicketMessage[]
+  assignedTickets Ticket[]        @relation("AssignedTickets")
+  apiKeys         ApiKey[]
+  auditLogs       AuditLog[]
+  tokens          VerificationToken[]
+}
+
+// Staff role. A user with any role is staff; permissions ["*"] = full admin.
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  permissions Json     @default("[]")
+  users       User[]
+  createdAt   DateTime @default(now())
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+enum TokenType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+  TWO_FACTOR
+}
+
+model VerificationToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  type      TokenType
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+}
+
+// ── Catalog ─────────────────────────────────────────────────────────────────
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  image       String?
+  sortOrder   Int       @default(0)
+  hidden      Boolean   @default(false)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  image       String?
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  // null = unlimited stock
+  stock         Int?
+  hidden        Boolean @default(false)
+  sortOrder     Int     @default(0)
+  allowQuantity Boolean @default(false)
+  // Server-provisioning extension that fulfils this product, plus its per-product
+  // settings (e.g. Pterodactyl egg/limits).
+  serverExtensionId String?
+  serverExtension   Extension? @relation(fields: [serverExtensionId], references: [id], onDelete: SetNull)
+  serverConfig      Json?
+
+  prices        ProductPrice[]
+  configOptions ConfigOption[]
+  orderItems    OrderItem[]
+  services      Service[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+enum BillingCycle {
+  ONE_TIME
+  MONTHLY
+  QUARTERLY
+  SEMI_ANNUALLY
+  ANNUALLY
+  BIENNIALLY
+}
+
+model ProductPrice {
+  id        String       @id @default(cuid())
+  productId String
+  product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cycle     BillingCycle
+  price     Decimal      @db.Decimal(12, 2)
+  setupFee  Decimal      @default(0) @db.Decimal(12, 2)
+
+  @@unique([productId, cycle])
+}
+
+// Configurable options (e.g. RAM, disk) with priced values.
+model ConfigOption {
+  id        String              @id @default(cuid())
+  productId String
+  product   Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name      String
+  envKey    String? // variable name passed to the provisioning extension
+  sortOrder Int                 @default(0)
+  values    ConfigOptionValue[]
+}
+
+model ConfigOptionValue {
+  id        String       @id @default(cuid())
+  optionId  String
+  option    ConfigOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  label     String
+  value     String
+  // monthly price delta; scaled to the chosen cycle at checkout
+  price     Decimal      @default(0) @db.Decimal(12, 2)
+  sortOrder Int          @default(0)
+}
+
+// ── Orders & services ───────────────────────────────────────────────────────
+
+enum OrderStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+model Order {
+  id        String      @id @default(cuid())
+  number    Int         @unique @default(autoincrement())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    OrderStatus @default(PENDING)
+  currency  String      @default("USD")
+  subtotal  Decimal     @default(0) @db.Decimal(12, 2)
+  discount  Decimal     @default(0) @db.Decimal(12, 2)
+  tax       Decimal     @default(0) @db.Decimal(12, 2)
+  total     Decimal     @default(0) @db.Decimal(12, 2)
+  couponId  String?
+  coupon    Coupon?     @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  items     OrderItem[]
+  services  Service[]
+  invoices  Invoice[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([userId])
+}
+
+model OrderItem {
+  id        String       @id @default(cuid())
+  orderId   String
+  order     Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product      @relation(fields: [productId], references: [id])
+  cycle     BillingCycle
+  quantity  Int          @default(1)
+  unitPrice Decimal      @db.Decimal(12, 2)
+  setupFee  Decimal      @default(0) @db.Decimal(12, 2)
+  // chosen config option values: [{option, value, label, price}]
+  config    Json?
+}
+
+enum ServiceStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+  EXPIRED
+}
+
+// A provisioned instance of a product owned by a user.
+model Service {
+  id        String        @id @default(cuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product       @relation(fields: [productId], references: [id])
+  orderId   String?
+  order     Order?        @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  status    ServiceStatus @default(PENDING)
+  cycle     BillingCycle
+  price     Decimal       @db.Decimal(12, 2)
+  quantity  Int           @default(1)
+  config    Json?
+  // id of the resource created by the provisioning extension
+  externalId  String?
+  expiresAt   DateTime?
+  suspendedAt DateTime?
+  cancelledAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  invoiceItems InvoiceItem[]
+
+  @@index([userId])
+  @@index([status, expiresAt])
+}
+
+// ── Billing ─────────────────────────────────────────────────────────────────
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  CANCELLED
+  REFUNDED
+}
+
+model Invoice {
+  id        String        @id @default(cuid())
+  number    Int           @unique @default(autoincrement())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderId   String?
+  order     Order?        @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  status    InvoiceStatus @default(PENDING)
+  currency  String        @default("USD")
+  subtotal  Decimal       @default(0) @db.Decimal(12, 2)
+  discount  Decimal       @default(0) @db.Decimal(12, 2)
+  tax       Decimal       @default(0) @db.Decimal(12, 2)
+  total     Decimal       @default(0) @db.Decimal(12, 2)
+  dueAt     DateTime?
+  paidAt    DateTime?
+  items     InvoiceItem[]
+  payments  Payment[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([status, dueAt])
+}
+
+model InvoiceItem {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Int      @default(1)
+  unitPrice   Decimal  @db.Decimal(12, 2)
+  serviceId   String?
+  service     Service? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  invoiceId     String
+  invoice       Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  gateway       String // extension slug, or "credits" / "manual"
+  amount        Decimal       @db.Decimal(12, 2)
+  currency      String        @default("USD")
+  status        PaymentStatus @default(PENDING)
+  transactionId String? // gateway-side reference
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([invoiceId])
+}
+
+// ── Promotions & taxes ──────────────────────────────────────────────────────
+
+enum CouponType {
+  PERCENT
+  FIXED
+}
+
+model Coupon {
+  id        String     @id @default(cuid())
+  code      String     @unique
+  type      CouponType
+  value     Decimal    @db.Decimal(12, 2)
+  maxUses   Int? // null = unlimited
+  uses      Int        @default(0)
+  expiresAt DateTime?
+  orders    Order[]
+  createdAt DateTime   @default(now())
+}
+
+model TaxRate {
+  id      String  @id @default(cuid())
+  name    String
+  rate    Decimal @db.Decimal(5, 2) // percent
+  country String? // null = fallback for all countries
+}
+
+// ── Support ─────────────────────────────────────────────────────────────────
+
+enum TicketStatus {
+  OPEN
+  ANSWERED
+  CUSTOMER_REPLY
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model Ticket {
+  id           String          @id @default(cuid())
+  number       Int             @unique @default(autoincrement())
+  userId       String
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject      String
+  department   String          @default("general")
+  status       TicketStatus    @default(OPEN)
+  priority     TicketPriority  @default(MEDIUM)
+  assignedToId String?
+  assignedTo   User?           @relation("AssignedTickets", fields: [assignedToId], references: [id], onDelete: SetNull)
+  messages     TicketMessage[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model TicketMessage {
+  id        String   @id @default(cuid())
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message   String
+  createdAt DateTime @default(now())
+}
+
+// ── Platform ────────────────────────────────────────────────────────────────
+
+model Setting {
+  key   String @id
+  value String
+}
+
+enum ExtensionType {
+  GATEWAY
+  SERVER
+}
+
+// Installed integration: payment gateway or server-provisioning backend.
+model Extension {
+  id        String        @id @default(cuid())
+  type      ExtensionType
+  slug      String        @unique // matches a driver in src/lib/extensions
+  name      String
+  enabled   Boolean       @default(false)
+  config    Json          @default("{}")
+  products  Product[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model ApiKey {
+  id          String    @id @default(cuid())
+  name        String
+  // sha-256 of the raw key; raw key shown once at creation
+  keyHash     String    @unique
+  prefix      String // first 8 chars for display
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permissions Json      @default("[\"*\"]")
+  lastUsedAt  DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model EmailTemplate {
+  key       String   @id // e.g. invoice_created, service_activated
+  subject   String
+  body      String // supports {{placeholders}}
+  enabled   Boolean  @default(true)
+  updatedAt DateTime @updatedAt
+}
+
+model EmailLog {
+  id        String   @id @default(cuid())
+  to        String
+  subject   String
+  status    String // sent | failed
+  error     String?
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String
+  targetType String?
+  targetId   String?
+  ip         String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+}

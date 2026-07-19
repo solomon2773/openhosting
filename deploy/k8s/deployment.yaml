@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openhosting
+  namespace: openhosting
+  labels:
+    app: openhosting
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: openhosting
+  template:
+    metadata:
+      labels:
+        app: openhosting
+    spec:
+      # Migrations run once per rollout, not in every replica.
+      initContainers:
+        - name: migrate
+          image: ghcr.io/openhosting/openhosting:latest
+          command:
+            - node
+            - node_modules/prisma/build/index.js
+            - migrate
+            - deploy
+            - --schema=prisma/schema.prisma
+          envFrom:
+            - secretRef:
+                name: openhosting-secrets
+      containers:
+        - name: app
+          image: ghcr.io/openhosting/openhosting:latest
+          env:
+            - name: SKIP_MIGRATIONS
+              value: "true"
+          envFrom:
+            - secretRef:
+                name: openhosting-secrets
+          ports:
+            - containerPort: 3000
+          readinessProbe:
+            httpGet:
+              path: /login
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /login
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi

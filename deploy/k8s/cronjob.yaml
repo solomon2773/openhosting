@@ -1,0 +1,30 @@
+# Hourly billing tick: renewal invoices, suspensions, terminations.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: openhosting-billing
+  namespace: openhosting
+spec:
+  schedule: "0 * * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: cron
+              image: curlimages/curl:latest
+              args:
+                - -s
+                - -X
+                - POST
+                - -H
+                - "Authorization: Bearer $(CRON_SECRET)"
+                - http://openhosting.openhosting.svc.cluster.local/api/cron
+              env:
+                - name: CRON_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: openhosting-secrets
+                      key: CRON_SECRET

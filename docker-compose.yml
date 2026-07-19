@@ -1,0 +1,45 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: openhosting
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-openhosting}
+      POSTGRES_DB: openhosting
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openhosting"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://openhosting:${DB_PASSWORD:-openhosting}@db:5432/openhosting
+      DIRECT_URL: postgresql://openhosting:${DB_PASSWORD:-openhosting}@db:5432/openhosting
+      CRON_SECRET: ${CRON_SECRET:-change-me}
+    ports:
+      - "3000:3000"
+
+  # Hits the billing endpoint hourly (renewal invoices, suspensions).
+  cron:
+    image: curlimages/curl:latest
+    restart: unless-stopped
+    depends_on:
+      - app
+    command: >
+      /bin/sh -c 'while true; do
+        sleep 3600;
+        curl -s -X POST -H "Authorization: Bearer $${CRON_SECRET}" http://app:3000/api/cron;
+      done'
+    environment:
+      CRON_SECRET: ${CRON_SECRET:-change-me}
+
+volumes:
+  db-data:
