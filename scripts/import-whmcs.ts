@@ -12,6 +12,13 @@ import mysql from "mysql2/promise";
 import { PrismaClient, type BillingCycle } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
+// Prisma 7 no longer auto-loads .env for standalone scripts.
+try {
+  process.loadEnvFile(".env");
+} catch {
+  // env vars provided by the environment
+}
+
 const db = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
 
 type Row = Record<string, unknown>;

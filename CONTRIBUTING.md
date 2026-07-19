@@ -9,7 +9,7 @@ npm install
 cp .env.example .env                       # point at a local Postgres
 docker run -d --name oh-db -p 5432:5432 \
   -e POSTGRES_USER=openhosting -e POSTGRES_PASSWORD=openhosting \
-  -e POSTGRES_DB=openhosting postgres:16-alpine
+  -e POSTGRES_DB=openhosting postgres:18-alpine
 npm run db:push && npm run db:seed
 npm run dev
 ```

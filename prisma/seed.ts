@@ -1,5 +1,12 @@
 import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+
+// Prisma 7 no longer auto-loads .env for standalone scripts.
+try {
+  process.loadEnvFile(".env");
+} catch {
+  // env vars provided by the environment
+}
 import bcrypt from "bcryptjs";
 
 const db = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });

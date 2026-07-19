@@ -7,6 +7,13 @@
 import { chromium, type Page } from "playwright";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+
+// Prisma 7 no longer auto-loads .env for standalone scripts.
+try {
+  process.loadEnvFile(".env");
+} catch {
+  // env vars provided by the environment
+}
 import { mkdirSync } from "node:fs";
 
 const BASE = process.env.BASE_URL ?? "http://localhost:3000";
