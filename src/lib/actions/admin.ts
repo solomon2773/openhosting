@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import type { BillingCycle, CouponType, TicketStatus } from "@prisma/client";
+import type { BillingCycle, CouponType, TicketStatus } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import { hashPassword, requireAdmin } from "@/lib/auth";
 import { markInvoicePaid } from "@/lib/billing";

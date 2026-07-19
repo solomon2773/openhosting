@@ -1,4 +1,4 @@
-import type { Extension, Invoice, Service, User } from "@prisma/client";
+import type { Extension, Invoice, Service, User } from "@/generated/prisma/client";
 
 export type ConfigField = {
   key: string;

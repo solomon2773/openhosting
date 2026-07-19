@@ -9,9 +9,10 @@
  * Matched rows (by email/slug) are skipped, so the script is re-runnable.
  */
 import mysql from "mysql2/promise";
-import { PrismaClient, type BillingCycle } from "@prisma/client";
+import { PrismaClient, type BillingCycle } from "../src/generated/prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 
-const db = new PrismaClient();
+const db = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
 
 type Row = Record<string, unknown>;
 

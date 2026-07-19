@@ -1,5 +1,5 @@
 import type { ServerDriver } from "@/lib/extensions/types";
-import type { Service } from "@prisma/client";
+import type { Service } from "@/generated/prisma/client";
 
 // cPanel/WHM via the WHM API 1 (token auth).
 async function whm(

@@ -1,5 +1,5 @@
 import "server-only";
-import type { Extension, Product, Service, User } from "@prisma/client";
+import type { Extension, Product, Service, User } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import { getServerDriver } from "@/lib/extensions/registry";
 import { extensionConfig } from "@/lib/extensions/types";

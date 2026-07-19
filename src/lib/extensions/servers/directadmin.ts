@@ -1,5 +1,5 @@
 import type { ServerDriver } from "@/lib/extensions/types";
-import type { Service } from "@prisma/client";
+import type { Service } from "@/generated/prisma/client";
 import { randomBytes } from "node:crypto";
 
 // DirectAdmin via its CMD_API_* endpoints (basic auth with a login key).

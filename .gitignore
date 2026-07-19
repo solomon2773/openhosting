@@ -19,3 +19,5 @@ next-env.d.ts
 
 /prisma/*.db
 /prisma/migrations/dev/
+
+/src/generated/

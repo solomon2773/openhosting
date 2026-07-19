@@ -1,5 +1,5 @@
 import "server-only";
-import type { User } from "@prisma/client";
+import type { User } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import { sendTemplate } from "@/lib/mail";
 

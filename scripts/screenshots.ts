@@ -5,12 +5,13 @@
  * Usage: BASE_URL=http://localhost:3000 npx tsx scripts/screenshots.ts
  */
 import { chromium, type Page } from "playwright";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../src/generated/prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { mkdirSync } from "node:fs";
 
 const BASE = process.env.BASE_URL ?? "http://localhost:3000";
 const OUT = "docs/screenshots";
-const db = new PrismaClient();
+const db = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
 
 async function shot(page: Page, path: string, name: string) {
   await page.goto(`${BASE}${path}`, { waitUntil: "networkidle" });

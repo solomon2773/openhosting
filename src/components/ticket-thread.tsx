@@ -1,7 +1,7 @@
 import { formatDateTime } from "@/lib/format";
 import { closeTicket, replyTicket } from "@/lib/actions/client";
 import { ActionForm, SubmitButton } from "@/components/forms";
-import type { Ticket, TicketMessage, User } from "@prisma/client";
+import type { Ticket, TicketMessage, User } from "@/generated/prisma/client";
 
 type Attachment = { id: string; filename: string; size: number };
 type ThreadTicket = Ticket & {

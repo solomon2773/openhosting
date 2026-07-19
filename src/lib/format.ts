@@ -1,4 +1,4 @@
-import type { BillingCycle } from "@prisma/client";
+import type { BillingCycle } from "@/generated/prisma/client";
 
 export function formatMoney(
   amount: number | string | { toString(): string },

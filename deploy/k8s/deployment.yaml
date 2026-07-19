@@ -24,7 +24,6 @@ spec:
             - prisma-cli/node_modules/prisma/build/index.js
             - migrate
             - deploy
-            - --schema=prisma/schema.prisma
           envFrom:
             - secretRef:
                 name: openhosting-secrets

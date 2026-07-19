@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { randomBytes, createHash } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 
 const SESSION_COOKIE = "oh_session";
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 14; // 14 days

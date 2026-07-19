@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import type { BillingCycle } from "@prisma/client";
+import type { BillingCycle } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import { getUser } from "@/lib/auth";
 import { clearCart, readCart, readCoupon, writeCart, writeCoupon } from "@/lib/cart";

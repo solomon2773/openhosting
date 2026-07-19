@@ -2,7 +2,7 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sha256 } from "@/lib/auth";
-import type { ApiKey, User } from "@prisma/client";
+import type { ApiKey, User } from "@/generated/prisma/client";
 
 // Authenticates /api/v1 requests via `Authorization: Bearer oh_<key>`.
 export async function authenticateApiKey(

@@ -1,5 +1,5 @@
 import "server-only";
-import type { BillingCycle } from "@prisma/client";
+import type { BillingCycle } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import { CYCLE_MONTHS } from "@/lib/format";
 import { getSettings } from "@/lib/settings";

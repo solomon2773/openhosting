@@ -14,7 +14,7 @@ import {
 } from "@/lib/actions/admin";
 import { ActionForm, SubmitButton } from "@/components/forms";
 import { CYCLE_LABELS } from "@/lib/format";
-import type { BillingCycle } from "@prisma/client";
+import type { BillingCycle } from "@/generated/prisma/client";
 
 const CYCLES = Object.keys(CYCLE_LABELS) as BillingCycle[];
 

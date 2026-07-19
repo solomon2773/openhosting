@@ -1,5 +1,5 @@
 import type { ServerDriver } from "@/lib/extensions/types";
-import type { Service } from "@prisma/client";
+import type { Service } from "@/generated/prisma/client";
 
 // Enhance control panel API (Bearer org token, apidocs.enhance.com).
 async function enhance(
