@@ -9,6 +9,7 @@
 | `CRON_SECRET` | ✔ | Bearer token protecting `POST /api/cron` |
 | `SKIP_MIGRATIONS` | | `true` skips `migrate deploy` in the container entrypoint |
 | `SEED_ADMIN_PASSWORD` | | Admin password used by `npm run db:seed` |
+| `WHMCS_DB_URL` | | Source MySQL DSN for `npm run import:whmcs` |
 | `PAYMENTER_DB_URL` | | Source MySQL DSN for `npm run import:paymenter` |
 
 ## Admin → Settings

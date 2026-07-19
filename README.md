@@ -3,7 +3,7 @@
 # 🚀 OpenHosting
 
 **Open-source billing & client management for hosting providers.**
-The Paymenter feature set, rebuilt on a modern stack: Next.js 15 · Prisma · PostgreSQL/Supabase · Docker · Kubernetes.
+Storefront, recurring billing, provisioning and support — one modern stack: Next.js 16 · Prisma · PostgreSQL/Supabase · Docker · Kubernetes.
 
 [![CI](https://img.shields.io/badge/CI-GitHub_Actions-2088FF?logo=githubactions&logoColor=white)](.github/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -20,11 +20,10 @@ The Paymenter feature set, rebuilt on a modern stack: Next.js 15 · Prisma · Po
 ## Why OpenHosting?
 
 Selling game servers, VPS or web hosting means gluing together a store, recurring
-billing, provisioning and support. WHMCS is proprietary and Paymenter ties you to
-the PHP/Laravel ecosystem. OpenHosting gives you the same end-to-end workflow as a
+billing, provisioning and support. OpenHosting delivers that entire workflow as a
 single modern TypeScript app you can deploy anywhere a container runs — a VPS,
 any cloud, or a Kubernetes cluster — with Postgres or Supabase as the only
-dependency.
+dependency. No license fees, no legacy stack.
 
 ## ✨ Features
 
@@ -61,7 +60,7 @@ dependency.
 - **6 built-in themes** switchable at runtime, plus a two-file recipe for custom ones
 - **Multi-language UI** (English & Dutch shipped) with a storefront language picker
 - REST API (`/api/v1`) with scoped API keys
-- Importer for existing **Paymenter** installations (`npm run import:paymenter`)
+- One-command importers to migrate from other billing panels
 - Email notifications via SMTP with templated, per-event messages
 - Docker image, docker-compose stack, Kubernetes manifests with HPA + CronJob
 
@@ -130,7 +129,7 @@ npm run dev
 | REST API | [docs/api.md](docs/api.md) |
 | Writing extensions | [docs/extensions.md](docs/extensions.md) |
 | Themes | [docs/themes.md](docs/themes.md) |
-| Migrating from Paymenter | [docs/migrate-from-paymenter.md](docs/migrate-from-paymenter.md) |
+| Migrating from another panel | [docs/migrations.md](docs/migrations.md) |
 
 ## 🏗 Architecture
 
