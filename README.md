@@ -41,7 +41,7 @@ dependency. No license fees, no legacy stack.
 - Account credit balance, zero-total auto-activation, manual admin payments
 
 **Provisioning**
-- 8 server integrations included: **Pterodactyl, Convoy, VirtFusion, cPanel/WHM, DirectAdmin, Virtualizor, Plesk, Enhance**
+- 10 server integrations included: **Pterodactyl, Proxmox VE, Convoy, VirtFusion, cPanel/WHM, DirectAdmin, Virtualizor, Plesk, Enhance, Webmin/Virtualmin**
 - Automatic create / suspend / unsuspend / terminate on billing events
 - Config options map to environment variables on the provisioned server
 

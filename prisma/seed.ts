@@ -285,6 +285,8 @@ async function main() {
     { slug: "mollie", name: "Mollie", type: "GATEWAY" as const },
     { slug: "bank-transfer", name: "Bank transfer", type: "GATEWAY" as const },
     { slug: "pterodactyl", name: "Pterodactyl", type: "SERVER" as const },
+    { slug: "proxmox", name: "Proxmox VE", type: "SERVER" as const },
+    { slug: "webmin", name: "Webmin (Virtualmin)", type: "SERVER" as const },
   ];
   for (const driver of drivers) {
     await db.extension.upsert({

@@ -37,6 +37,12 @@ Settings** — no redeploy needed:
   paid manually.
 - **Pterodactyl** — panel URL + application API key; per-product egg, nest,
   location and resource limits are set on the product edit page.
+- **Proxmox VE** — API URL + API token; per-product node, guest type
+  (QEMU template clone or LXC), storage and resources. Config options with
+  env keys `CORES`, `MEMORY`, `DISK` let customers pick sizes at checkout.
+- **Webmin (Virtualmin)** — Webmin URL + credentials; per-product plan,
+  template and feature set. Add a config option with env key `DOMAIN` so
+  customers enter their domain at checkout.
 
 ## Billing cron
 

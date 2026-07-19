@@ -13,6 +13,8 @@ import { directAdminServer } from "@/lib/extensions/servers/directadmin";
 import { virtualizorServer } from "@/lib/extensions/servers/virtualizor";
 import { pleskServer } from "@/lib/extensions/servers/plesk";
 import { enhanceServer } from "@/lib/extensions/servers/enhance";
+import { proxmoxServer } from "@/lib/extensions/servers/proxmox";
+import { webminServer } from "@/lib/extensions/servers/webmin";
 
 export const GATEWAY_DRIVERS: GatewayDriver[] = [
   stripeGateway,
@@ -30,6 +32,8 @@ export const SERVER_DRIVERS: ServerDriver[] = [
   virtualizorServer,
   pleskServer,
   enhanceServer,
+  proxmoxServer,
+  webminServer,
 ];
 
 export function getGatewayDriver(slug: string): GatewayDriver | undefined {
