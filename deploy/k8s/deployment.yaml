@@ -21,7 +21,7 @@ spec:
           image: ghcr.io/openhosting/openhosting:latest
           command:
             - node
-            - node_modules/prisma/build/index.js
+            - prisma-cli/node_modules/prisma/build/index.js
             - migrate
             - deploy
             - --schema=prisma/schema.prisma

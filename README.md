@@ -96,11 +96,12 @@ cd openhosting
 docker compose up -d --build
 ```
 
-Then seed demo data and sign in:
+Then seed the admin account and demo data (from the repo, requires Node):
 
 ```bash
-docker compose exec app node node_modules/prisma/build/index.js db seed || \
-  DATABASE_URL="postgresql://openhosting:openhosting@localhost:5432/openhosting" npm run db:seed
+npm install
+DATABASE_URL="postgresql://openhosting:openhosting@localhost:5432/openhosting" \
+  npm run db:seed
 ```
 
 Open <http://localhost:3000> — admin login `admin@example.com` / `admin12345`
