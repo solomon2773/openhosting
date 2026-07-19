@@ -269,6 +269,7 @@ async function main() {
   const drivers = [
     { slug: "stripe", name: "Stripe", type: "GATEWAY" as const },
     { slug: "paypal", name: "PayPal", type: "GATEWAY" as const },
+    { slug: "mollie", name: "Mollie", type: "GATEWAY" as const },
     { slug: "bank-transfer", name: "Bank transfer", type: "GATEWAY" as const },
     { slug: "pterodactyl", name: "Pterodactyl", type: "SERVER" as const },
   ];

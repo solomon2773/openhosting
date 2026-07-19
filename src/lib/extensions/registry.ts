@@ -3,12 +3,14 @@ import { db } from "@/lib/db";
 import type { GatewayDriver, ServerDriver } from "@/lib/extensions/types";
 import { stripeGateway } from "@/lib/extensions/gateways/stripe";
 import { paypalGateway } from "@/lib/extensions/gateways/paypal";
+import { mollieGateway } from "@/lib/extensions/gateways/mollie";
 import { bankTransferGateway } from "@/lib/extensions/gateways/bank-transfer";
 import { pterodactylServer } from "@/lib/extensions/servers/pterodactyl";
 
 export const GATEWAY_DRIVERS: GatewayDriver[] = [
   stripeGateway,
   paypalGateway,
+  mollieGateway,
   bankTransferGateway,
 ];
 

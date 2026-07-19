@@ -34,7 +34,16 @@ export default async function InvoiceDetailPage({
             {formatDate(invoice.dueAt)}
           </p>
         </div>
-        <StatusBadge status={invoice.status} />
+        <div className="flex items-center gap-3">
+          <a
+            href={`/invoices/${invoice.id}/print`}
+            target="_blank"
+            className="btn-secondary"
+          >
+            Print / PDF
+          </a>
+          <StatusBadge status={invoice.status} />
+        </div>
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">

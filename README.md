@@ -37,7 +37,7 @@ dependency.
 **Billing engine**
 - Orders → invoices → services, fully automated
 - Automatic renewal invoicing, overdue suspension and termination (cron-driven)
-- Payment gateways as drop-in drivers: **Stripe**, **PayPal**, **bank transfer** included
+- Payment gateways as drop-in drivers: **Stripe**, **PayPal**, **Mollie**, **bank transfer** included
 - Account credit balance, zero-total auto-activation, manual admin payments
 
 **Provisioning**
