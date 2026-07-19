@@ -327,6 +327,7 @@ export async function saveCoupon(
   if (!code) return { error: "Code is required." };
   const expiresRaw = str(formData, "expiresAt");
   const maxUsesRaw = str(formData, "maxUses");
+  const productIds = formData.getAll("productId").map(String).filter(Boolean);
   await db.coupon.upsert({
     where: { code },
     update: {},
@@ -336,6 +337,7 @@ export async function saveCoupon(
       value: Number(formData.get("value") ?? 0),
       maxUses: maxUsesRaw === "" ? null : Number(maxUsesRaw),
       expiresAt: expiresRaw ? new Date(expiresRaw) : null,
+      products: { connect: productIds.map((id) => ({ id })) },
     },
   });
   revalidatePath("/admin/coupons");
@@ -370,6 +372,37 @@ export async function deleteTaxRate(formData: FormData): Promise<void> {
   await requireAdmin("settings");
   await db.taxRate.delete({ where: { id: str(formData, "id") } });
   revalidatePath("/admin/taxes");
+}
+
+// ── Currencies ──────────────────────────────────────────────────────────────
+
+export async function saveCurrency(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  await requireAdmin("settings");
+  const code = str(formData, "code").toUpperCase();
+  if (!/^[A-Z]{3}$/.test(code)) return { error: "Use a 3-letter ISO code." };
+  const rate = Number(formData.get("rate") ?? 0);
+  if (rate <= 0) return { error: "Rate must be greater than zero." };
+  await db.currency.upsert({
+    where: { code },
+    update: { rate, enabled: formData.get("enabled") === "on" },
+    create: {
+      code,
+      rate,
+      symbol: str(formData, "symbol") || null,
+      enabled: formData.get("enabled") === "on",
+    },
+  });
+  revalidatePath("/admin/currencies");
+  return { success: "Currency saved." };
+}
+
+export async function deleteCurrency(formData: FormData): Promise<void> {
+  await requireAdmin("settings");
+  await db.currency.delete({ where: { code: str(formData, "code") } });
+  revalidatePath("/admin/currencies");
 }
 
 // ── Tickets ─────────────────────────────────────────────────────────────────

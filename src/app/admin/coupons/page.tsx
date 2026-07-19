@@ -8,7 +8,13 @@ export const metadata = { title: "Coupons" };
 
 export default async function AdminCouponsPage() {
   await requireAdmin("coupons");
-  const coupons = await db.coupon.findMany({ orderBy: { createdAt: "desc" } });
+  const [coupons, products] = await Promise.all([
+    db.coupon.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { products: { select: { name: true } } },
+    }),
+    db.product.findMany({ orderBy: { name: "asc" } }),
+  ]);
 
   return (
     <div>
@@ -20,6 +26,7 @@ export default async function AdminCouponsPage() {
               <tr>
                 <th>Code</th>
                 <th>Discount</th>
+                <th>Products</th>
                 <th>Uses</th>
                 <th>Expires</th>
                 <th></th>
@@ -33,6 +40,11 @@ export default async function AdminCouponsPage() {
                     {coupon.type === "PERCENT"
                       ? `${Number(coupon.value)}%`
                       : `$${Number(coupon.value)}`}
+                  </td>
+                  <td className="max-w-40 truncate text-slate-500">
+                    {coupon.products.length === 0
+                      ? "All"
+                      : coupon.products.map((p) => p.name).join(", ")}
                   </td>
                   <td>
                     {coupon.uses}
@@ -93,6 +105,26 @@ export default async function AdminCouponsPage() {
                 <input name="expiresAt" type="date" className="input" />
               </div>
             </div>
+            <fieldset>
+              <legend className="label">
+                Limit to products (none = all products)
+              </legend>
+              <div className="max-h-36 space-y-1 overflow-y-auto rounded-lg border border-slate-200 p-2">
+                {products.map((product) => (
+                  <label
+                    key={product.id}
+                    className="flex items-center gap-2 text-sm"
+                  >
+                    <input
+                      type="checkbox"
+                      name="productId"
+                      value={product.id}
+                    />
+                    {product.name}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
             <SubmitButton className="btn-primary">Create coupon</SubmitButton>
           </ActionForm>
         </div>

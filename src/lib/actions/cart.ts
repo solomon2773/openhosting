@@ -3,9 +3,11 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import type { BillingCycle } from "@prisma/client";
+import { db } from "@/lib/db";
 import { getUser } from "@/lib/auth";
 import { clearCart, readCart, readCoupon, writeCart, writeCoupon } from "@/lib/cart";
 import { placeOrder, priceCart, validateCoupon } from "@/lib/services/orders";
+import { getActiveCurrency } from "@/lib/services/currency";
 import { markInvoicePaid } from "@/lib/billing";
 import { audit } from "@/lib/audit";
 import type { FormState } from "@/lib/actions/auth";
@@ -58,7 +60,15 @@ export async function checkout(): Promise<void> {
   if (lines.length === 0) redirect("/cart");
 
   const coupon = await readCoupon();
-  const { order, invoice } = await placeOrder(user.id, lines, coupon);
+  const currency = await getActiveCurrency(user.currency);
+  const { order, invoice } = await placeOrder(user.id, lines, coupon, currency);
+  // remember the customer's charge currency for future renewals
+  if (user.currency !== currency.code) {
+    await db.user.update({
+      where: { id: user.id },
+      data: { currency: currency.code },
+    });
+  }
   await audit("order.placed", {
     userId: user.id,
     targetType: "order",

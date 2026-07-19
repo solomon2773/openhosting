@@ -127,6 +127,7 @@ export async function generateRenewalInvoices(): Promise<number> {
     where: {
       status: "ACTIVE",
       cycle: { not: "ONE_TIME" },
+      cancelAtPeriodEnd: false,
       expiresAt: { lte: horizon },
       // no open renewal invoice yet
       invoiceItems: { none: { invoice: { status: "PENDING" } } },
@@ -137,10 +138,12 @@ export async function generateRenewalInvoices(): Promise<number> {
   let created = 0;
   for (const service of services) {
     const total = Number(service.price) * service.quantity;
+    // services are priced in the currency locked at order time
+    const currency = service.currency ?? settings.currency;
     const invoice = await db.invoice.create({
       data: {
         userId: service.userId,
-        currency: settings.currency,
+        currency,
         subtotal: total,
         total,
         dueAt: service.expiresAt,
@@ -163,7 +166,7 @@ export async function generateRenewalInvoices(): Promise<number> {
       name: service.user.firstName,
       invoice: String(invoice.number),
       company: settings.company_name,
-      total: formatMoney(total, settings.currency),
+      total: formatMoney(total, currency),
       due: formatDate(invoice.dueAt),
       link: `${settings.company_url}/dashboard/invoices/${invoice.id}`,
     });
@@ -171,11 +174,36 @@ export async function generateRenewalInvoices(): Promise<number> {
   return created;
 }
 
+// Executes customer-scheduled end-of-term cancellations once the paid
+// period is over.
+export async function cancelEndOfTermServices(): Promise<number> {
+  const services = await db.service.findMany({
+    where: {
+      status: "ACTIVE",
+      cancelAtPeriodEnd: true,
+      expiresAt: { lte: new Date() },
+    },
+    include: serviceInclude,
+  });
+  for (const service of services) {
+    await db.service.update({
+      where: { id: service.id },
+      data: { status: "CANCELLED", cancelledAt: new Date() },
+    });
+    await provisionTerminate(service);
+  }
+  return services.length;
+}
+
 export async function suspendOverdueServices(): Promise<number> {
   const graceDays = Number(await getSetting("suspend_days_after"));
   const cutoff = new Date(Date.now() - graceDays * DAY_MS);
   const services = await db.service.findMany({
-    where: { status: "ACTIVE", expiresAt: { lte: cutoff } },
+    where: {
+      status: "ACTIVE",
+      cancelAtPeriodEnd: false,
+      expiresAt: { lte: cutoff },
+    },
     include: serviceInclude,
   });
   for (const service of services) {

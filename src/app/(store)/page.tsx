@@ -2,11 +2,12 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { getSetting } from "@/lib/settings";
 import { formatMoney } from "@/lib/format";
+import { convertFromBase, getActiveCurrency } from "@/lib/services/currency";
 
 export default async function HomePage() {
   const [companyName, currency, categories] = await Promise.all([
     getSetting("company_name"),
-    getSetting("currency"),
+    getActiveCurrency(),
     db.category.findMany({
       where: { hidden: false },
       orderBy: { sortOrder: "asc" },
@@ -87,7 +88,13 @@ export default async function HomePage() {
                     <p className="mt-4 text-sm text-slate-500">
                       From{" "}
                       <span className="text-lg font-semibold text-slate-900">
-                        {formatMoney(product.prices[0].price, currency)}
+                        {formatMoney(
+                          convertFromBase(
+                            Number(product.prices[0].price),
+                            currency,
+                          ),
+                          currency.code,
+                        )}
                       </span>
                       /mo
                     </p>

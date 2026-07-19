@@ -17,6 +17,7 @@ const NAV: Array<{ heading: string; items: { href: string; label: string }[] }> 
       { href: "/admin/services", label: "Services" },
       { href: "/admin/coupons", label: "Coupons" },
       { href: "/admin/taxes", label: "Tax rates" },
+      { href: "/admin/currencies", label: "Currencies" },
     ],
   },
   {

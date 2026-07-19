@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
-import { getSetting } from "@/lib/settings";
+import { convertFromBase, getActiveCurrency } from "@/lib/services/currency";
 import { ProductConfigurator } from "./configurator";
 
 export default async function ProductPage({
@@ -10,7 +10,7 @@ export default async function ProductPage({
 }) {
   const { product: slug } = await params;
   const [currency, product] = await Promise.all([
-    getSetting("currency"),
+    getActiveCurrency(),
     db.product.findUnique({
       where: { slug },
       include: {
@@ -49,12 +49,12 @@ export default async function ProductPage({
           ) : (
             <ProductConfigurator
               productId={product.id}
-              currency={currency}
+              currency={currency.code}
               allowQuantity={product.allowQuantity}
               prices={product.prices.map((p) => ({
                 cycle: p.cycle,
-                price: Number(p.price),
-                setupFee: Number(p.setupFee),
+                price: convertFromBase(Number(p.price), currency),
+                setupFee: convertFromBase(Number(p.setupFee), currency),
               }))}
               options={product.configOptions.map((o) => ({
                 id: o.id,
@@ -62,7 +62,7 @@ export default async function ProductPage({
                 values: o.values.map((v) => ({
                   id: v.id,
                   label: v.label,
-                  price: Number(v.price),
+                  price: convertFromBase(Number(v.price), currency),
                 })),
               }))}
             />

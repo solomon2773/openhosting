@@ -79,7 +79,10 @@ export async function priceCart(lines: CartLine[]): Promise<PricedLine[]> {
 }
 
 export async function validateCoupon(code: string) {
-  const coupon = await db.coupon.findUnique({ where: { code } });
+  const coupon = await db.coupon.findUnique({
+    where: { code },
+    include: { products: { select: { id: true } } },
+  });
   if (!coupon) return null;
   if (coupon.expiresAt && coupon.expiresAt < new Date()) return null;
   if (coupon.maxUses !== null && coupon.uses >= coupon.maxUses) return null;
@@ -90,35 +93,51 @@ export async function computeTotals(
   lines: PricedLine[],
   couponCode: string | null,
   country: string | null,
+  currency?: { code: string; rate: number },
 ) {
+  // All math happens in base currency, then converts once at the end.
+  const rate = currency?.rate ?? 1;
   const subtotal = round(lines.reduce((sum, l) => sum + l.lineTotal, 0));
 
   let discount = 0;
   const coupon = couponCode ? await validateCoupon(couponCode) : null;
   if (coupon) {
+    // A coupon restricted to products only discounts matching lines.
+    const restricted = coupon.products.map((p) => p.id);
+    const eligible =
+      restricted.length === 0
+        ? subtotal
+        : round(
+            lines
+              .filter((l) => restricted.includes(l.productId))
+              .reduce((sum, l) => sum + l.lineTotal, 0),
+          );
     discount =
       coupon.type === "PERCENT"
-        ? round((subtotal * Number(coupon.value)) / 100)
-        : Math.min(round(Number(coupon.value)), subtotal);
+        ? round((eligible * Number(coupon.value)) / 100)
+        : Math.min(round(Number(coupon.value)), eligible);
   }
 
   let tax = 0;
   const settings = await getSettings(["tax_enabled", "currency"]);
   if (settings.tax_enabled === "true") {
     const rates = await db.taxRate.findMany();
-    const rate =
+    const taxRate =
       rates.find((r) => r.country && r.country === country) ??
       rates.find((r) => !r.country);
-    if (rate) tax = round(((subtotal - discount) * Number(rate.rate)) / 100);
+    if (taxRate) {
+      tax = round(((subtotal - discount) * Number(taxRate.rate)) / 100);
+    }
   }
 
   return {
-    subtotal,
-    discount,
-    tax,
-    total: round(subtotal - discount + tax),
+    subtotal: round(subtotal * rate),
+    discount: round(discount * rate),
+    tax: round(tax * rate),
+    total: round((subtotal - discount + tax) * rate),
     coupon,
-    currency: settings.currency,
+    currency: currency?.code ?? settings.currency,
+    rate,
   };
 }
 
@@ -127,10 +146,17 @@ export async function placeOrder(
   userId: string,
   lines: PricedLine[],
   couponCode: string | null,
+  currency?: { code: string; rate: number },
 ) {
   if (lines.length === 0) throw new Error("Cart is empty");
   const user = await db.user.findUnique({ where: { id: userId } });
-  const totals = await computeTotals(lines, couponCode, user?.country ?? null);
+  const totals = await computeTotals(
+    lines,
+    couponCode,
+    user?.country ?? null,
+    currency,
+  );
+  const rate = totals.rate;
 
   return db.$transaction(async (tx) => {
     const order = await tx.order.create({
@@ -147,8 +173,8 @@ export async function placeOrder(
             productId: l.productId,
             cycle: l.cycle,
             quantity: l.quantity,
-            unitPrice: l.unitPrice,
-            setupFee: l.setupFee,
+            unitPrice: round(l.unitPrice * rate),
+            setupFee: round(l.setupFee * rate),
             config: l.config,
           })),
         },
@@ -170,7 +196,8 @@ export async function placeOrder(
             productId: l.productId,
             orderId: order.id,
             cycle: l.cycle,
-            price: l.unitPrice,
+            price: round(l.unitPrice * rate),
+            currency: totals.currency,
             quantity: l.quantity,
             config: l.config,
           },
@@ -192,7 +219,7 @@ export async function placeOrder(
           create: lines.map((l, i) => ({
             description: `${l.name} (${l.cycle.toLowerCase().replace("_", "-")})`,
             quantity: l.quantity,
-            unitPrice: l.unitPrice,
+            unitPrice: round(l.unitPrice * rate),
             serviceId: services[i].id,
           })),
         },

@@ -101,6 +101,7 @@ export async function requestServiceCancellation(
 ): Promise<FormState> {
   const user = await requireUser();
   const serviceId = String(formData.get("serviceId") ?? "");
+  const mode = String(formData.get("mode") ?? "end_of_term");
   const service = await db.service.findUnique({ where: { id: serviceId } });
   if (!service || service.userId !== user.id) {
     return { error: "Service not found." };
@@ -108,13 +109,32 @@ export async function requestServiceCancellation(
   if (service.status === "CANCELLED") {
     return { error: "Service is already cancelled." };
   }
-  await db.service.update({
-    where: { id: serviceId },
-    data: { status: "CANCELLED", cancelledAt: new Date() },
-  });
+
+  // Either way, open renewal invoices are voided.
   await db.invoice.updateMany({
     where: { status: "PENDING", items: { some: { serviceId } } },
     data: { status: "CANCELLED" },
+  });
+
+  if (mode === "end_of_term" && service.expiresAt && service.expiresAt > new Date()) {
+    await db.service.update({
+      where: { id: serviceId },
+      data: { cancelAtPeriodEnd: true },
+    });
+    await audit("service.cancellation_scheduled", {
+      userId: user.id,
+      targetType: "service",
+      targetId: serviceId,
+    });
+    revalidatePath(`/dashboard/services/${serviceId}`);
+    return {
+      success: "Your service will cancel at the end of the paid period.",
+    };
+  }
+
+  await db.service.update({
+    where: { id: serviceId },
+    data: { status: "CANCELLED", cancelledAt: new Date() },
   });
   await audit("service.cancelled_by_user", {
     userId: user.id,

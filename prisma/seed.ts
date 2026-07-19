@@ -243,6 +243,11 @@ async function main() {
       data: { name: "Sales tax", rate: 8.5, country: "US" },
     });
   }
+  await db.currency.upsert({
+    where: { code: "EUR" },
+    update: {},
+    create: { code: "EUR", symbol: "€", rate: 0.92, enabled: true },
+  });
 
   // ── Settings & email templates ────────────────────────────────────────────
   const settings: Record<string, string> = {

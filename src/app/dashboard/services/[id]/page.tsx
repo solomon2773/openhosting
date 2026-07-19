@@ -119,21 +119,42 @@ export default async function ServiceDetailPage({
         </table>
       </div>
 
-      {service.status !== "CANCELLED" && (
-        <div className="card mt-6 border-red-200 p-5">
-          <h2 className="font-semibold text-red-700">Cancel service</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Cancelling immediately stops this service and voids any open
-            renewal invoices. This cannot be undone.
-          </p>
-          <ActionForm action={requestServiceCancellation} className="mt-4">
-            <input type="hidden" name="serviceId" value={service.id} />
-            <SubmitButton className="btn-danger">
-              Cancel this service
-            </SubmitButton>
-          </ActionForm>
-        </div>
-      )}
+      {service.status !== "CANCELLED" &&
+        (service.cancelAtPeriodEnd ? (
+          <div className="card mt-6 border-amber-200 p-5">
+            <p className="text-sm text-amber-700">
+              This service is scheduled to cancel at the end of the paid
+              period ({formatDate(service.expiresAt)}).
+            </p>
+          </div>
+        ) : (
+          <div className="card mt-6 border-red-200 p-5">
+            <h2 className="font-semibold text-red-700">Cancel service</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Open renewal invoices are voided either way. This cannot be
+              undone.
+            </p>
+            <ActionForm action={requestServiceCancellation} className="mt-4 space-y-3">
+              <input type="hidden" name="serviceId" value={service.id} />
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="radio"
+                  name="mode"
+                  value="end_of_term"
+                  defaultChecked
+                />
+                At the end of the paid period ({formatDate(service.expiresAt)})
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="radio" name="mode" value="immediate" />
+                Immediately
+              </label>
+              <SubmitButton className="btn-danger">
+                Cancel this service
+              </SubmitButton>
+            </ActionForm>
+          </div>
+        ))}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { getUser } from "@/lib/auth";
 import { readCart, readCoupon } from "@/lib/cart";
 import { computeTotals, priceCart } from "@/lib/services/orders";
 import { formatMoney, CYCLE_LABELS } from "@/lib/format";
+import { getActiveCurrency } from "@/lib/services/currency";
 import { applyCoupon, checkout, removeFromCart } from "@/lib/actions/cart";
 import { ActionForm, SubmitButton } from "@/components/forms";
 
@@ -14,8 +15,16 @@ export default async function CartPage() {
     readCart(),
     readCoupon(),
   ]);
+  const currency = await getActiveCurrency(user?.currency);
   const lines = await priceCart(cart);
-  const totals = await computeTotals(lines, couponCode, user?.country ?? null);
+  const totals = await computeTotals(
+    lines,
+    couponCode,
+    user?.country ?? null,
+    currency,
+  );
+  // line prices are in base currency; show them in the active currency
+  const inActive = (base: number) => base * totals.rate;
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-12">
@@ -48,13 +57,14 @@ export default async function CartPage() {
                   ))}
                   {line.setupFee > 0 && (
                     <p className="text-xs text-slate-400">
-                      Setup fee: {formatMoney(line.setupFee, totals.currency)}
+                      Setup fee:{" "}
+                      {formatMoney(inActive(line.setupFee), totals.currency)}
                     </p>
                   )}
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <p className="font-semibold">
-                    {formatMoney(line.lineTotal, totals.currency)}
+                    {formatMoney(inActive(line.lineTotal), totals.currency)}
                   </p>
                   <form action={removeFromCart}>
                     <input type="hidden" name="index" value={index} />

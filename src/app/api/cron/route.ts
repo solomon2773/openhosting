@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  cancelEndOfTermServices,
   cancelStaleSuspendedServices,
   generateRenewalInvoices,
   suspendOverdueServices,
@@ -14,7 +15,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const invoicesCreated = await generateRenewalInvoices();
+  const endOfTermCancelled = await cancelEndOfTermServices();
   const suspended = await suspendOverdueServices();
   const cancelled = await cancelStaleSuspendedServices();
-  return NextResponse.json({ invoicesCreated, suspended, cancelled });
+  return NextResponse.json({
+    invoicesCreated,
+    endOfTermCancelled,
+    suspended,
+    cancelled,
+  });
 }

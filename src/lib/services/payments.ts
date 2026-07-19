@@ -4,6 +4,7 @@ import { getGatewayDriver } from "@/lib/extensions/registry";
 import { extensionConfig, type PayResult } from "@/lib/extensions/types";
 import { getSetting } from "@/lib/settings";
 import { markInvoicePaid } from "@/lib/billing";
+import { convertToBase } from "@/lib/services/currency";
 
 // Payment service: the only module that resolves and invokes gateway drivers
 // (dependency inversion — checkout/webhook code never sees a concrete
@@ -47,13 +48,20 @@ export async function payWithCredits(
   }
   if (invoice.status !== "PENDING") return { error: "Invoice is not payable" };
 
+  // credits are held in the base currency; convert foreign-currency invoices
+  const baseCurrency = await getSetting("currency");
+  const chargeInBase =
+    invoice.currency === baseCurrency
+      ? Number(invoice.total)
+      : await convertToBase(Number(invoice.total), invoice.currency);
+
   const user = await db.user.findUnique({ where: { id: userId } });
-  if (!user || Number(user.credits) < Number(invoice.total)) {
+  if (!user || Number(user.credits) < chargeInBase) {
     return { error: "Insufficient credit balance" };
   }
   await db.user.update({
     where: { id: userId },
-    data: { credits: { decrement: invoice.total } },
+    data: { credits: { decrement: chargeInBase } },
   });
   await markInvoicePaid(invoice.id, "credits");
   return {};

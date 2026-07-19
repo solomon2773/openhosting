@@ -26,7 +26,8 @@ model User {
   zip             String?
   country         String?
   phone           String?
-  credits         Decimal   @default(0) @db.Decimal(12, 2)
+  credits         Decimal   @default(0) @db.Decimal(12, 2) // in base currency
+  currency        String? // preferred display/charge currency
   emailVerifiedAt DateTime?
   totpSecret      String?
   totpEnabledAt   DateTime?
@@ -122,6 +123,7 @@ model Product {
   configOptions ConfigOption[]
   orderItems    OrderItem[]
   services      Service[]
+  coupons       Coupon[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
@@ -232,6 +234,7 @@ model Service {
   status    ServiceStatus @default(PENDING)
   cycle     BillingCycle
   price     Decimal       @db.Decimal(12, 2)
+  currency  String? // locked at order time; null = base currency
   quantity  Int           @default(1)
   config    Json?
   // id of the resource created by the provisioning extension
@@ -239,6 +242,8 @@ model Service {
   expiresAt   DateTime?
   suspendedAt DateTime?
   cancelledAt DateTime?
+  // customer requested cancellation at the end of the paid period
+  cancelAtPeriodEnd Boolean @default(false)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -329,6 +334,8 @@ model Coupon {
   maxUses   Int? // null = unlimited
   uses      Int        @default(0)
   expiresAt DateTime?
+  // empty = applies to every product
+  products  Product[]
   orders    Order[]
   createdAt DateTime   @default(now())
 }
@@ -338,6 +345,15 @@ model TaxRate {
   name    String
   rate    Decimal @db.Decimal(5, 2) // percent
   country String? // null = fallback for all countries
+}
+
+// Additional display/charge currencies. The base currency lives in settings
+// (`currency`); `rate` is units of this currency per 1 unit of base.
+model Currency {
+  code    String  @id // ISO 4217, e.g. EUR
+  symbol  String?
+  rate    Decimal @db.Decimal(12, 6)
+  enabled Boolean @default(true)
 }
 
 // ── Support ─────────────────────────────────────────────────────────────────

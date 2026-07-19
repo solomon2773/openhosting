@@ -32,7 +32,8 @@ dependency.
 - Product catalog with categories, stock control and visibility rules
 - Six billing cycles (one-time → biennially) with setup fees per cycle
 - Configurable options (RAM, disk, …) with per-option pricing that scales with the cycle
-- Cart, coupons (percent/fixed, limited uses, expiry) and country-aware tax rates
+- Cart, coupons (percent/fixed, per-product restrictions, limited uses, expiry) and country-aware tax rates
+- **Multi-currency**: exchange rates, storefront currency picker, orders locked to their currency
 
 **Billing engine**
 - Orders → invoices → services, fully automated
@@ -41,7 +42,7 @@ dependency.
 - Account credit balance, zero-total auto-activation, manual admin payments
 
 **Provisioning**
-- Server integrations as drop-in drivers — **Pterodactyl** included
+- 8 server integrations included: **Pterodactyl, Convoy, VirtFusion, cPanel/WHM, DirectAdmin, Virtualizor, Plesk, Enhance**
 - Automatic create / suspend / unsuspend / terminate on billing events
 - Config options map to environment variables on the provisioned server
 

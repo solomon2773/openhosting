@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
-import { getSetting } from "@/lib/settings";
 import { formatMoney } from "@/lib/format";
+import { convertFromBase, getActiveCurrency } from "@/lib/services/currency";
 
 export default async function CategoryPage({
   params,
@@ -11,7 +11,7 @@ export default async function CategoryPage({
 }) {
   const { category: slug } = await params;
   const [currency, category] = await Promise.all([
-    getSetting("currency"),
+    getActiveCurrency(),
     db.category.findUnique({
       where: { slug },
       include: {
@@ -48,7 +48,10 @@ export default async function CategoryPage({
                   <p className="text-sm text-slate-500">
                     From{" "}
                     <span className="text-xl font-semibold text-slate-900">
-                      {formatMoney(cheapest.price, currency)}
+                      {formatMoney(
+                        convertFromBase(Number(cheapest.price), currency),
+                        currency.code,
+                      )}
                     </span>
                   </p>
                 ) : (

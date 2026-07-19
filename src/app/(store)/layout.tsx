@@ -3,6 +3,11 @@ import { getUser } from "@/lib/auth";
 import { getSetting } from "@/lib/settings";
 import { db } from "@/lib/db";
 import { readCart } from "@/lib/cart";
+import {
+  getActiveCurrency,
+  getEnabledCurrencies,
+} from "@/lib/services/currency";
+import { CurrencyPicker } from "@/components/currency-picker";
 
 export default async function StoreLayout({
   children,
@@ -17,6 +22,10 @@ export default async function StoreLayout({
       orderBy: { sortOrder: "asc" },
     }),
     readCart(),
+  ]);
+  const [currencies, activeCurrency] = await Promise.all([
+    getEnabledCurrencies(),
+    getActiveCurrency(user?.currency),
   ]);
 
   return (
@@ -41,6 +50,10 @@ export default async function StoreLayout({
             ))}
           </nav>
           <div className="flex items-center gap-3">
+            <CurrencyPicker
+              currencies={currencies.map((c) => c.code)}
+              active={activeCurrency.code}
+            />
             <Link
               href="/cart"
               className="btn-secondary relative"
