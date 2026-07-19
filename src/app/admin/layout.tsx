@@ -40,6 +40,7 @@ const NAV: Array<{ heading: string; items: { href: string; label: string }[] }> 
       { href: "/admin/announcements", label: "Announcements" },
       { href: "/admin/extensions", label: "Extensions" },
       { href: "/admin/api-keys", label: "API keys" },
+      { href: "/admin/oauth-clients", label: "OAuth clients" },
       { href: "/admin/email-templates", label: "Email templates" },
       { href: "/admin/settings", label: "Settings" },
       { href: "/admin/audit-log", label: "Audit log" },

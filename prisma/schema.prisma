@@ -531,6 +531,39 @@ model EmailLog {
   createdAt DateTime @default(now())
 }
 
+// ── OAuth2 provider (authorization-code flow) ───────────────────────────────
+
+model OauthClient {
+  id           String      @id @default(cuid())
+  name         String
+  clientId     String      @unique
+  clientSecret String // sha-256 hash; raw shown once at creation
+  redirectUris String // newline-separated exact-match URIs
+  createdAt    DateTime    @default(now())
+  codes        OauthCode[]
+  tokens       OauthToken[]
+}
+
+model OauthCode {
+  id          String      @id @default(cuid())
+  codeHash    String      @unique
+  clientId    String
+  client      OauthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  userId      String
+  redirectUri String
+  expiresAt   DateTime
+}
+
+model OauthToken {
+  id        String      @id @default(cuid())
+  tokenHash String      @unique
+  clientId  String
+  client    OauthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime    @default(now())
+}
+
 // News/blog posts shown on the public storefront.
 model Announcement {
   id          String    @id @default(cuid())
