@@ -12,7 +12,8 @@
     "db:migrate": "prisma migrate deploy",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
-    "import:paymenter": "tsx scripts/import-paymenter.ts"
+    "import:paymenter": "tsx scripts/import-paymenter.ts",
+    "import:whmcs": "tsx scripts/import-whmcs.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

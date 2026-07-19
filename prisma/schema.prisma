@@ -531,6 +531,18 @@ model EmailLog {
   createdAt DateTime @default(now())
 }
 
+// News/blog posts shown on the public storefront.
+model Announcement {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  excerpt     String?
+  body        String
+  publishedAt DateTime? // null = draft
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
 model AuditLog {
   id         String   @id @default(cuid())
   userId     String?

@@ -103,12 +103,32 @@ const registerSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
+async function verifyTurnstile(formData: FormData): Promise<boolean> {
+  const secret = await getSetting("turnstile_secret");
+  if (!secret) return true; // captcha not configured
+  const token = String(formData.get("cf-turnstile-response") ?? "");
+  if (!token) return false;
+  const res = await fetch(
+    "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ secret, response: token }),
+    },
+  );
+  const data = await res.json().catch(() => null);
+  return data?.success === true;
+}
+
 export async function register(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
   if ((await getSetting("registration_enabled")) !== "true") {
     return { error: "Registration is currently disabled." };
+  }
+  if (!(await verifyTurnstile(formData))) {
+    return { error: "Captcha verification failed. Please try again." };
   }
   const parsed = registerSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {

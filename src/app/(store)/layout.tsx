@@ -8,6 +8,8 @@ import {
   getEnabledCurrencies,
 } from "@/lib/services/currency";
 import { CurrencyPicker } from "@/components/currency-picker";
+import { getLocale, getT, LOCALES } from "@/lib/i18n";
+import { LocalePicker } from "@/components/locale-picker";
 
 export default async function StoreLayout({
   children,
@@ -23,9 +25,11 @@ export default async function StoreLayout({
     }),
     readCart(),
   ]);
-  const [currencies, activeCurrency] = await Promise.all([
+  const [currencies, activeCurrency, locale, t] = await Promise.all([
     getEnabledCurrencies(),
     getActiveCurrency(user?.currency),
+    getLocale(),
+    getT(),
   ]);
 
   return (
@@ -48,8 +52,12 @@ export default async function StoreLayout({
                 {c.name}
               </Link>
             ))}
+            <Link href="/blog" className="hover:text-slate-900">
+              {t("nav.blog")}
+            </Link>
           </nav>
           <div className="flex items-center gap-3">
+            <LocalePicker locales={LOCALES} active={locale} />
             <CurrencyPicker
               currencies={currencies.map((c) => c.code)}
               active={activeCurrency.code}
@@ -59,7 +67,7 @@ export default async function StoreLayout({
               className="btn-secondary relative"
               aria-label="Cart"
             >
-              Cart
+              {t("nav.cart")}
               {cart.length > 0 && (
                 <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-white">
                   {cart.length}
@@ -68,11 +76,11 @@ export default async function StoreLayout({
             </Link>
             {user ? (
               <Link href="/dashboard" className="btn-primary">
-                Dashboard
+                {t("nav.dashboard")}
               </Link>
             ) : (
               <Link href="/login" className="btn-primary">
-                Sign in
+                {t("nav.signIn")}
               </Link>
             )}
           </div>
@@ -82,10 +90,11 @@ export default async function StoreLayout({
       <footer className="border-t border-slate-200 bg-white py-8">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 text-sm text-slate-500 md:flex-row">
           <p>
-            © {new Date().getFullYear()} {companyName}. All rights reserved.
+            © {new Date().getFullYear()} {companyName}.{" "}
+            {t("footer.allRights")}
           </p>
           <p>
-            Powered by{" "}
+            {t("footer.poweredBy")}{" "}
             <a
               href="https://github.com/solomon2773/openhosting"
               className="text-brand-600 hover:underline"

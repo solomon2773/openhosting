@@ -14,6 +14,9 @@ export const SETTING_DEFAULTS: Record<string, string> = {
   tax_enabled: "false",
   registration_enabled: "true",
   require_email_verification: "false",
+  // Cloudflare Turnstile captcha on the registration form (blank = off)
+  turnstile_site_key: "",
+  turnstile_secret: "",
   mail_from: "billing@example.com",
   smtp_host: "",
   smtp_port: "587",

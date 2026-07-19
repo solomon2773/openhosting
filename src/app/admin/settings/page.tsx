@@ -34,6 +34,17 @@ const SECTIONS: Array<{
     ],
   },
   {
+    heading: "Security",
+    fields: [
+      {
+        key: "turnstile_site_key",
+        label: "Cloudflare Turnstile site key",
+        help: "Blank disables the registration captcha.",
+      },
+      { key: "turnstile_secret", label: "Turnstile secret key", type: "password" },
+    ],
+  },
+  {
     heading: "Email (SMTP)",
     fields: [
       { key: "mail_from", label: "From address" },

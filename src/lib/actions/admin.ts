@@ -477,6 +477,52 @@ export async function saveExtension(
   return { success: "Extension saved." };
 }
 
+// ── Announcements ───────────────────────────────────────────────────────────
+
+export async function saveAnnouncement(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const admin = await requireAdmin("announcements");
+  const id = str(formData, "id");
+  const title = str(formData, "title");
+  if (!title) return { error: "Title is required." };
+  const data = {
+    title,
+    slug: str(formData, "slug") || slugify(title),
+    excerpt: str(formData, "excerpt") || null,
+    body: str(formData, "body"),
+    publishedAt: formData.get("published") === "on" ? new Date() : null,
+  };
+  if (id) {
+    const existing = await db.announcement.findUnique({ where: { id } });
+    await db.announcement.update({
+      where: { id },
+      data: {
+        ...data,
+        // keep the original publish date when it stays published
+        publishedAt:
+          formData.get("published") === "on"
+            ? (existing?.publishedAt ?? new Date())
+            : null,
+      },
+    });
+  } else {
+    await db.announcement.create({ data });
+  }
+  await audit("admin.announcement_saved", { userId: admin.id });
+  revalidatePath("/admin/announcements");
+  revalidatePath("/blog");
+  return { success: "Announcement saved." };
+}
+
+export async function deleteAnnouncement(formData: FormData): Promise<void> {
+  await requireAdmin("announcements");
+  await db.announcement.delete({ where: { id: str(formData, "id") } });
+  revalidatePath("/admin/announcements");
+  revalidatePath("/blog");
+}
+
 // ── Email templates ─────────────────────────────────────────────────────────
 
 export async function saveEmailTemplate(

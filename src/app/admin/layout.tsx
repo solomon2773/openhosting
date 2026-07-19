@@ -37,6 +37,7 @@ const NAV: Array<{ heading: string; items: { href: string; label: string }[] }> 
   {
     heading: "System",
     items: [
+      { href: "/admin/announcements", label: "Announcements" },
       { href: "/admin/extensions", label: "Extensions" },
       { href: "/admin/api-keys", label: "API keys" },
       { href: "/admin/email-templates", label: "Email templates" },
