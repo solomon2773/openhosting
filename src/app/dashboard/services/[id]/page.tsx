@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
+import { getT } from "@/lib/i18n";
 import { db } from "@/lib/db";
 import { formatDate, formatMoney, CYCLE_LABELS } from "@/lib/format";
 import { getSetting } from "@/lib/settings";
@@ -15,6 +16,7 @@ export default async function ServiceDetailPage({
 }) {
   const { id } = await params;
   const user = await requireUser();
+  const t = await getT();
   const [currency, service] = await Promise.all([
     getSetting("currency"),
     db.service.findUnique({
@@ -48,31 +50,31 @@ export default async function ServiceDetailPage({
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <div className="card p-5">
-          <h2 className="mb-4 font-semibold">Billing</h2>
+          <h2 className="mb-4 font-semibold">{t("service.billing")}</h2>
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <dt className="text-slate-500">Billing cycle</dt>
+              <dt className="text-slate-500">{t("service.cycle")}</dt>
               <dd>{CYCLE_LABELS[service.cycle]}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-slate-500">Price</dt>
+              <dt className="text-slate-500">{t("table.price")}</dt>
               <dd>{formatMoney(service.price, currency)}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-slate-500">Registered</dt>
+              <dt className="text-slate-500">{t("service.registered")}</dt>
               <dd>{formatDate(service.createdAt)}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-slate-500">Next due date</dt>
+              <dt className="text-slate-500">{t("service.nextDueDate")}</dt>
               <dd>{formatDate(service.expiresAt)}</dd>
             </div>
           </dl>
         </div>
 
         <div className="card p-5">
-          <h2 className="mb-4 font-semibold">Configuration</h2>
+          <h2 className="mb-4 font-semibold">{t("service.configuration")}</h2>
           {config.length === 0 ? (
-            <p className="text-sm text-slate-400">No configurable options.</p>
+            <p className="text-sm text-slate-400">{t("service.noOptions")}</p>
           ) : (
             <dl className="space-y-2 text-sm">
               {config.map((c) => (
@@ -87,14 +89,14 @@ export default async function ServiceDetailPage({
       </div>
 
       <div className="card mt-6">
-        <h2 className="px-5 py-4 font-semibold">Related invoices</h2>
+        <h2 className="px-5 py-4 font-semibold">{t("service.relatedInvoices")}</h2>
         <table className="table-base">
           <thead>
             <tr>
-              <th>Invoice</th>
-              <th>Date</th>
-              <th>Total</th>
-              <th>Status</th>
+              <th>{t("table.invoice")}</th>
+              <th>{t("table.date")}</th>
+              <th>{t("table.total")}</th>
+              <th>{t("table.status")}</th>
             </tr>
           </thead>
           <tbody>
@@ -123,10 +125,9 @@ export default async function ServiceDetailPage({
 
       {upgrades.length > 0 && service.status === "ACTIVE" && (
         <div className="card mt-6 p-5">
-          <h2 className="font-semibold">Upgrade this service</h2>
+          <h2 className="font-semibold">{t("service.upgradeTitle")}</h2>
           <p className="mt-1 text-sm text-slate-500">
-            Upgrades are prorated for the remainder of the current billing
-            period and take effect immediately after payment.
+            {t("service.upgradeHint")}
           </p>
           <div className="mt-4 space-y-3">
             {upgrades.map((upgrade) => (
@@ -140,8 +141,8 @@ export default async function ServiceDetailPage({
                     {formatMoney(upgrade.newPrice, upgrade.currency)} /{" "}
                     {CYCLE_LABELS[service.cycle].toLowerCase()} ·{" "}
                     {upgrade.proratedCharge > 0
-                      ? `${formatMoney(upgrade.proratedCharge, upgrade.currency)} due now`
-                      : "no charge"}
+                      ? `${formatMoney(upgrade.proratedCharge, upgrade.currency)} ${t("service.dueNow")}`
+                      : t("service.noCharge")}
                   </p>
                 </div>
                 <ActionForm action={upgradeService} className="m-0">
@@ -152,7 +153,7 @@ export default async function ServiceDetailPage({
                     value={upgrade.toProductId}
                   />
                   <SubmitButton className="btn-secondary">
-                    {upgrade.proratedCharge > 0 ? "Upgrade" : "Switch"}
+                    {upgrade.proratedCharge > 0 ? t("service.upgrade") : t("service.switch")}
                   </SubmitButton>
                 </ActionForm>
               </div>
@@ -165,16 +166,14 @@ export default async function ServiceDetailPage({
         (service.cancelAtPeriodEnd ? (
           <div className="card mt-6 border-amber-200 p-5">
             <p className="text-sm text-amber-700">
-              This service is scheduled to cancel at the end of the paid
-              period ({formatDate(service.expiresAt)}).
+              {t("service.cancelScheduled")} ({formatDate(service.expiresAt)}).
             </p>
           </div>
         ) : (
           <div className="card mt-6 border-red-200 p-5">
-            <h2 className="font-semibold text-red-700">Cancel service</h2>
+            <h2 className="font-semibold text-red-700">{t("service.cancelTitle")}</h2>
             <p className="mt-1 text-sm text-slate-500">
-              Open renewal invoices are voided either way. This cannot be
-              undone.
+              {t("service.cancelHint")}
             </p>
             <ActionForm action={requestServiceCancellation} className="mt-4 space-y-3">
               <input type="hidden" name="serviceId" value={service.id} />
@@ -185,14 +184,14 @@ export default async function ServiceDetailPage({
                   value="end_of_term"
                   defaultChecked
                 />
-                At the end of the paid period ({formatDate(service.expiresAt)})
+                {t("service.cancelEndOfTerm")} ({formatDate(service.expiresAt)})
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <input type="radio" name="mode" value="immediate" />
-                Immediately
+                {t("service.cancelImmediate")}
               </label>
               <SubmitButton className="btn-danger">
-                Cancel this service
+                {t("service.cancelButton")}
               </SubmitButton>
             </ActionForm>
           </div>

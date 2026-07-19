@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
+import { getT } from "@/lib/i18n";
 import { db } from "@/lib/db";
 import { formatDate, formatMoney } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
@@ -8,6 +9,7 @@ export const metadata = { title: "Invoices" };
 
 export default async function InvoicesPage() {
   const user = await requireUser();
+  const t = await getT();
   const invoices = await db.invoice.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: "desc" },
@@ -15,16 +17,16 @@ export default async function InvoicesPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Invoices</h1>
+      <h1 className="text-2xl font-bold">{t("invoices.title")}</h1>
       <div className="card mt-6">
         <table className="table-base">
           <thead>
             <tr>
-              <th>Invoice</th>
-              <th>Created</th>
-              <th>Due</th>
-              <th>Total</th>
-              <th>Status</th>
+              <th>{t("table.invoice")}</th>
+              <th>{t("table.created")}</th>
+              <th>{t("table.due")}</th>
+              <th>{t("table.total")}</th>
+              <th>{t("table.status")}</th>
             </tr>
           </thead>
           <tbody>
@@ -49,7 +51,7 @@ export default async function InvoicesPage() {
             {invoices.length === 0 && (
               <tr>
                 <td colSpan={5} className="py-8 text-center text-slate-400">
-                  No invoices yet.
+                  {t("dash.noInvoices")}
                 </td>
               </tr>
             )}

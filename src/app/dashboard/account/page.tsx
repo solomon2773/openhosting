@@ -1,4 +1,5 @@
 import { requireUser } from "@/lib/auth";
+import { getT } from "@/lib/i18n";
 import { db } from "@/lib/db";
 import {
   beginTwoFactorSetup,
@@ -28,6 +29,7 @@ const PROFILE_FIELDS = [
 
 export default async function AccountPage() {
   const user = await requireUser();
+  const t = await getT();
   const prefs = await db.notificationPreference.findMany({
     where: { userId: user.id },
   });
@@ -36,10 +38,10 @@ export default async function AccountPage() {
 
   return (
     <div className="max-w-3xl space-y-8">
-      <h1 className="text-2xl font-bold">Account settings</h1>
+      <h1 className="text-2xl font-bold">{t("account.title")}</h1>
 
       <div className="card p-6">
-        <h2 className="mb-4 font-semibold">Profile</h2>
+        <h2 className="mb-4 font-semibold">{t("account.profile")}</h2>
         <ActionForm action={updateProfile}>
           <div className="grid gap-4 sm:grid-cols-2">
             {PROFILE_FIELDS.map((field) => (
@@ -58,17 +60,17 @@ export default async function AccountPage() {
             ))}
           </div>
           <p className="text-sm text-slate-500">Email: {user.email}</p>
-          <SubmitButton className="btn-primary">Save profile</SubmitButton>
+          <SubmitButton className="btn-primary">{t("account.saveProfile")}</SubmitButton>
         </ActionForm>
       </div>
 
       <div className="card p-6">
-        <h2 className="mb-4 font-semibold">Change password</h2>
+        <h2 className="mb-4 font-semibold">{t("account.changePassword")}</h2>
         <ActionForm action={changePassword}>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="label" htmlFor="current">
-                Current password
+                {t("account.currentPassword")}
               </label>
               <input
                 id="current"
@@ -81,7 +83,7 @@ export default async function AccountPage() {
             </div>
             <div>
               <label className="label" htmlFor="password">
-                New password
+                {t("account.newPassword")}
               </label>
               <input
                 id="password"
@@ -94,19 +96,19 @@ export default async function AccountPage() {
               />
             </div>
           </div>
-          <SubmitButton className="btn-primary">Update password</SubmitButton>
+          <SubmitButton className="btn-primary">{t("account.updatePassword")}</SubmitButton>
         </ActionForm>
       </div>
 
       <div className="card p-6">
-        <h2 className="mb-4 font-semibold">Notifications</h2>
+        <h2 className="mb-4 font-semibold">{t("account.notifications")}</h2>
         <ActionForm action={saveNotificationPreferences}>
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-slate-500 uppercase">
-                <th className="pb-2">Event</th>
-                <th className="pb-2 text-center">Email</th>
-                <th className="pb-2 text-center">In-app</th>
+                <th className="pb-2">{t("account.event")}</th>
+                <th className="pb-2 text-center">{t("account.email")}</th>
+                <th className="pb-2 text-center">{t("account.inApp")}</th>
               </tr>
             </thead>
             <tbody>
@@ -134,7 +136,7 @@ export default async function AccountPage() {
               })}
             </tbody>
           </table>
-          <SubmitButton className="btn-primary">Save preferences</SubmitButton>
+          <SubmitButton className="btn-primary">{t("account.savePrefs")}</SubmitButton>
         </ActionForm>
       </div>
 

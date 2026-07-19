@@ -2,6 +2,7 @@ import { requireAdmin } from "@/lib/auth";
 import { getSettings } from "@/lib/settings";
 import { saveSettings } from "@/lib/actions/admin";
 import { ActionForm, SubmitButton } from "@/components/forms";
+import { THEMES } from "@/lib/themes";
 
 export const metadata = { title: "Settings" };
 
@@ -10,7 +11,8 @@ const SECTIONS: Array<{
   fields: Array<{
     key: string;
     label: string;
-    type?: "text" | "password" | "checkbox" | "number";
+    type?: "text" | "password" | "checkbox" | "number" | "select";
+    options?: ReadonlyArray<{ value: string; label: string }>;
     help?: string;
   }>;
 }> = [
@@ -20,6 +22,13 @@ const SECTIONS: Array<{
       { key: "company_name", label: "Company name" },
       { key: "company_url", label: "Public URL", help: "Used in emails and payment redirects." },
       { key: "currency", label: "Currency (ISO code)", help: "e.g. USD, EUR" },
+      {
+        key: "theme",
+        label: "Theme",
+        type: "select",
+        options: THEMES.map((t) => ({ value: t.slug, label: t.label })),
+        help: "Brand color scheme for the whole site.",
+      },
       { key: "registration_enabled", label: "Allow new registrations", type: "checkbox" },
       { key: "require_email_verification", label: "Require email verification", type: "checkbox" },
     ],
@@ -85,6 +94,27 @@ export default async function AdminSettingsPage() {
                     <label htmlFor={field.key} className="text-sm">
                       {field.label}
                     </label>
+                  </div>
+                ) : field.type === "select" ? (
+                  <div key={field.key}>
+                    <label className="label" htmlFor={field.key}>
+                      {field.label}
+                    </label>
+                    <select
+                      id={field.key}
+                      name={field.key}
+                      defaultValue={values[field.key]}
+                      className="input"
+                    >
+                      {field.options?.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    {field.help && (
+                      <p className="mt-1 text-xs text-slate-400">{field.help}</p>
+                    )}
                   </div>
                 ) : (
                   <div key={field.key}>

@@ -4,14 +4,15 @@ import { getSetting } from "@/lib/settings";
 import { logout } from "@/lib/actions/auth";
 import { formatMoney } from "@/lib/format";
 import { unreadCount } from "@/lib/services/notifications";
+import { getT, type MessageKey } from "@/lib/i18n";
 
-const NAV = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/dashboard/services", label: "Services" },
-  { href: "/dashboard/invoices", label: "Invoices" },
-  { href: "/dashboard/tickets", label: "Support" },
-  { href: "/dashboard/account/billing", label: "Billing" },
-  { href: "/dashboard/account", label: "Account" },
+const NAV: Array<{ href: string; label: MessageKey }> = [
+  { href: "/dashboard", label: "dash.nav.dashboard" },
+  { href: "/dashboard/services", label: "dash.nav.services" },
+  { href: "/dashboard/invoices", label: "dash.nav.invoices" },
+  { href: "/dashboard/tickets", label: "dash.nav.support" },
+  { href: "/dashboard/account/billing", label: "dash.nav.billing" },
+  { href: "/dashboard/account", label: "dash.nav.account" },
 ];
 
 export default async function DashboardLayout({
@@ -20,10 +21,11 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const user = await requireUser();
-  const [companyName, currency, unread] = await Promise.all([
+  const [companyName, currency, unread, t] = await Promise.all([
     getSetting("company_name"),
     getSetting("currency"),
     unreadCount(user.id),
+    getT(),
   ]);
 
   return (
@@ -42,14 +44,14 @@ export default async function DashboardLayout({
               href={item.href}
               className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900"
             >
-              {item.label}
+              {t(item.label)}
             </Link>
           ))}
           <Link
             href="/dashboard/notifications"
             className="flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900"
           >
-            Notifications
+            {t("dash.nav.notifications")}
             {unread > 0 && (
               <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-600 px-1.5 text-xs font-semibold text-white">
                 {unread}
@@ -61,7 +63,7 @@ export default async function DashboardLayout({
               href="/admin"
               className="block rounded-lg px-3 py-2 text-sm font-medium text-brand-600 hover:bg-brand-50"
             >
-              Admin panel →
+              {t("dash.nav.adminPanel")} →
             </Link>
           )}
         </nav>
@@ -71,14 +73,14 @@ export default async function DashboardLayout({
           </p>
           <p className="truncate text-xs text-slate-500">{user.email}</p>
           <p className="mt-1 text-xs text-slate-500">
-            Credit: {formatMoney(user.credits, currency)}
+            {t("dash.credit")}: {formatMoney(user.credits, currency)}
           </p>
           <form action={logout} className="mt-3">
             <button
               type="submit"
               className="text-sm text-slate-500 hover:text-slate-900"
             >
-              Sign out
+              {t("dash.nav.signOut")}
             </button>
           </form>
         </div>
@@ -91,7 +93,7 @@ export default async function DashboardLayout({
           <nav className="flex gap-4 text-sm">
             {NAV.slice(0, 4).map((item) => (
               <Link key={item.href} href={item.href} className="text-slate-600">
-                {item.label}
+                {t(item.label)}
               </Link>
             ))}
           </nav>

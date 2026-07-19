@@ -5,6 +5,7 @@ export const SETTING_DEFAULTS: Record<string, string> = {
   company_name: "OpenHosting",
   company_url: "http://localhost:3000",
   currency: "USD",
+  theme: "indigo",
   // days before expiry to generate the renewal invoice
   invoice_days_before: "7",
   // days after due date before a service is suspended

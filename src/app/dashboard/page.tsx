@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
+import { getT } from "@/lib/i18n";
 import { db } from "@/lib/db";
 import { formatDate, formatMoney } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
@@ -8,6 +9,7 @@ export const metadata = { title: "Dashboard" };
 
 export default async function DashboardPage() {
   const user = await requireUser();
+  const t = await getT();
   const [activeServices, unpaidInvoices, openTickets, recentInvoices] =
     await Promise.all([
       db.service.count({ where: { userId: user.id, status: "ACTIVE" } }),
@@ -23,15 +25,15 @@ export default async function DashboardPage() {
     ]);
 
   const stats = [
-    { label: "Active services", value: activeServices, href: "/dashboard/services" },
-    { label: "Unpaid invoices", value: unpaidInvoices, href: "/dashboard/invoices" },
-    { label: "Open tickets", value: openTickets, href: "/dashboard/tickets" },
+    { label: t("dash.stat.activeServices"), value: activeServices, href: "/dashboard/services" },
+    { label: t("dash.stat.unpaidInvoices"), value: unpaidInvoices, href: "/dashboard/invoices" },
+    { label: t("dash.stat.openTickets"), value: openTickets, href: "/dashboard/tickets" },
   ];
 
   return (
     <div>
       <h1 className="text-2xl font-bold">
-        Welcome back, {user.firstName}
+        {t("dash.welcome")} {user.firstName}
       </h1>
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
         {stats.map((stat) => (
@@ -44,21 +46,21 @@ export default async function DashboardPage() {
 
       <div className="card mt-8">
         <div className="flex items-center justify-between px-5 py-4">
-          <h2 className="font-semibold">Recent invoices</h2>
+          <h2 className="font-semibold">{t("dash.recentInvoices")}</h2>
           <Link
             href="/dashboard/invoices"
             className="text-sm text-brand-600 hover:underline"
           >
-            View all
+            {t("dash.viewAll")}
           </Link>
         </div>
         <table className="table-base">
           <thead>
             <tr>
-              <th>Invoice</th>
-              <th>Date</th>
-              <th>Total</th>
-              <th>Status</th>
+              <th>{t("table.invoice")}</th>
+              <th>{t("table.date")}</th>
+              <th>{t("table.total")}</th>
+              <th>{t("table.status")}</th>
             </tr>
           </thead>
           <tbody>
@@ -82,9 +84,9 @@ export default async function DashboardPage() {
             {recentInvoices.length === 0 && (
               <tr>
                 <td colSpan={4} className="py-8 text-center text-slate-400">
-                  No invoices yet.{" "}
+                  {t("dash.noInvoices")}{" "}
                   <Link href="/" className="text-brand-600 hover:underline">
-                    Order your first service
+                    {t("dash.orderFirst")}
                   </Link>
                 </td>
               </tr>

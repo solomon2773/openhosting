@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
+import { getT } from "@/lib/i18n";
 import { db } from "@/lib/db";
 import { formatDateTime } from "@/lib/format";
 
@@ -7,6 +8,7 @@ export const metadata = { title: "Notifications" };
 
 export default async function NotificationsPage() {
   const user = await requireUser();
+  const t = await getT();
   const notifications = await db.notification.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: "desc" },
@@ -20,7 +22,7 @@ export default async function NotificationsPage() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="text-2xl font-bold">Notifications</h1>
+      <h1 className="text-2xl font-bold">{t("notif.title")}</h1>
       <div className="card mt-6 divide-y divide-slate-100">
         {notifications.map((notification) => (
           <div
@@ -55,8 +57,7 @@ export default async function NotificationsPage() {
         ))}
         {notifications.length === 0 && (
           <p className="p-10 text-center text-sm text-slate-400">
-            Nothing here yet — invoices, service events and ticket replies
-            will show up in this feed.
+            {t("notif.empty")}
           </p>
         )}
       </div>

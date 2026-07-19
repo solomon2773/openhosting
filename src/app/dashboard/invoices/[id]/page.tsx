@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
+import { getT } from "@/lib/i18n";
 import { db } from "@/lib/db";
 import { formatDate, formatMoney } from "@/lib/format";
 import { getSettings } from "@/lib/settings";
@@ -14,6 +15,7 @@ export default async function InvoiceDetailPage({
 }) {
   const { id } = await params;
   const user = await requireUser();
+  const t = await getT();
   const [settings, invoice, gateways] = await Promise.all([
     getSettings(["company_name", "company_url"]),
     db.invoice.findUnique({
@@ -30,7 +32,7 @@ export default async function InvoiceDetailPage({
         <div>
           <h1 className="text-2xl font-bold">Invoice #{invoice.number}</h1>
           <p className="mt-1 text-sm text-slate-500">
-            Issued {formatDate(invoice.createdAt)} · Due{" "}
+            {t("invoice.issued")} {formatDate(invoice.createdAt)} · {t("invoice.due")}{" "}
             {formatDate(invoice.dueAt)}
           </p>
         </div>
@@ -40,7 +42,7 @@ export default async function InvoiceDetailPage({
             target="_blank"
             className="btn-secondary"
           >
-            Print / PDF
+            {t("invoice.printPdf")}
           </a>
           <StatusBadge status={invoice.status} />
         </div>
@@ -51,7 +53,7 @@ export default async function InvoiceDetailPage({
           <div className="border-b border-slate-100 px-5 py-4">
             <p className="font-semibold">{settings.company_name}</p>
             <p className="text-sm text-slate-500">
-              Billed to: {user.firstName} {user.lastName} ({user.email})
+              {t("invoice.billedTo")}: {user.firstName} {user.lastName} ({user.email})
             </p>
           </div>
           <table className="table-base">
@@ -83,23 +85,23 @@ export default async function InvoiceDetailPage({
           </table>
           <dl className="space-y-1 px-5 py-4 text-sm">
             <div className="flex justify-between">
-              <dt className="text-slate-500">Subtotal</dt>
+              <dt className="text-slate-500">{t("invoice.subtotal")}</dt>
               <dd>{formatMoney(invoice.subtotal, invoice.currency)}</dd>
             </div>
             {Number(invoice.discount) > 0 && (
               <div className="flex justify-between text-green-600">
-                <dt>Discount</dt>
+                <dt>{t("invoice.discount")}</dt>
                 <dd>-{formatMoney(invoice.discount, invoice.currency)}</dd>
               </div>
             )}
             {Number(invoice.tax) > 0 && (
               <div className="flex justify-between">
-                <dt className="text-slate-500">Tax</dt>
+                <dt className="text-slate-500">{t("invoice.tax")}</dt>
                 <dd>{formatMoney(invoice.tax, invoice.currency)}</dd>
               </div>
             )}
             <div className="flex justify-between border-t border-slate-200 pt-2 text-base font-semibold">
-              <dt>Total</dt>
+              <dt>{t("invoice.total")}</dt>
               <dd>{formatMoney(invoice.total, invoice.currency)}</dd>
             </div>
           </dl>
@@ -108,7 +110,7 @@ export default async function InvoiceDetailPage({
         <div className="space-y-4">
           {invoice.status === "PENDING" ? (
             <div className="card p-5">
-              <h2 className="mb-3 font-semibold">Pay this invoice</h2>
+              <h2 className="mb-3 font-semibold">{t("invoice.payTitle")}</h2>
               <PayBox
                 invoiceId={invoice.id}
                 total={Number(invoice.total)}
@@ -119,9 +121,9 @@ export default async function InvoiceDetailPage({
             </div>
           ) : (
             <div className="card p-5">
-              <h2 className="mb-2 font-semibold">Payment</h2>
+              <h2 className="mb-2 font-semibold">{t("invoice.paymentTitle")}</h2>
               {invoice.payments.length === 0 ? (
-                <p className="text-sm text-slate-500">No payments recorded.</p>
+                <p className="text-sm text-slate-500">{t("invoice.noPayments")}</p>
               ) : (
                 <ul className="space-y-2 text-sm">
                   {invoice.payments.map((payment) => (

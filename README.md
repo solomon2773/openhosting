@@ -58,6 +58,8 @@ dependency.
 - Full audit log and searchable customer list
 
 **Platform**
+- **6 built-in themes** switchable at runtime, plus a two-file recipe for custom ones
+- **Multi-language UI** (English & Dutch shipped) with a storefront language picker
 - REST API (`/api/v1`) with scoped API keys
 - Importer for existing **Paymenter** installations (`npm run import:paymenter`)
 - Email notifications via SMTP with templated, per-event messages
@@ -127,6 +129,7 @@ npm run dev
 | Configuration reference | [docs/configuration.md](docs/configuration.md) |
 | REST API | [docs/api.md](docs/api.md) |
 | Writing extensions | [docs/extensions.md](docs/extensions.md) |
+| Themes | [docs/themes.md](docs/themes.md) |
 | Migrating from Paymenter | [docs/migrate-from-paymenter.md](docs/migrate-from-paymenter.md) |
 
 ## 🏗 Architecture

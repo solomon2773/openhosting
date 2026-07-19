@@ -1,4 +1,5 @@
 import { formatDateTime } from "@/lib/format";
+import { getT } from "@/lib/i18n";
 import { closeTicket, replyTicket } from "@/lib/actions/client";
 import { ActionForm, SubmitButton } from "@/components/forms";
 import type { Ticket, TicketMessage, User } from "@/generated/prisma/client";
@@ -12,13 +13,14 @@ type ThreadTicket = Ticket & {
 };
 
 // Shared between the client area and the admin panel.
-export function TicketThread({
+export async function TicketThread({
   ticket,
   viewerId,
 }: {
   ticket: ThreadTicket;
   viewerId: string;
 }) {
+  const t = await getT();
   return (
     <div className="space-y-6">
       <div className="space-y-4">
@@ -35,11 +37,11 @@ export function TicketThread({
                   {message.user.firstName} {message.user.lastName}
                   {isStaff && (
                     <span className="badge ml-2 bg-brand-100 text-brand-700">
-                      Staff
+                      {t("ticket.staff")}
                     </span>
                   )}
                   {isViewer && !isStaff && (
-                    <span className="ml-2 text-xs text-slate-400">(you)</span>
+                    <span className="ml-2 text-xs text-slate-400">{t("ticket.you")}</span>
                   )}
                 </p>
                 <p className="text-slate-400">
@@ -73,7 +75,7 @@ export function TicketThread({
 
       {ticket.status !== "CLOSED" ? (
         <div className="card p-5">
-          <h2 className="mb-3 font-semibold">Reply</h2>
+          <h2 className="mb-3 font-semibold">{t("ticket.reply")}</h2>
           <ActionForm action={replyTicket}>
             <input type="hidden" name="ticketId" value={ticket.id} />
             <textarea
@@ -85,7 +87,7 @@ export function TicketThread({
             />
             <div>
               <label className="label" htmlFor="attachments">
-                Attachments (up to 3 files, 5 MB each)
+                {t("ticket.attachments")}
               </label>
               <input
                 id="attachments"
@@ -96,7 +98,7 @@ export function TicketThread({
               />
             </div>
             <div className="flex gap-3">
-              <SubmitButton className="btn-primary">Send reply</SubmitButton>
+              <SubmitButton className="btn-primary">{t("ticket.sendReply")}</SubmitButton>
             </div>
           </ActionForm>
           <ActionForm action={closeTicket} className="mt-3">
@@ -105,13 +107,13 @@ export function TicketThread({
               type="submit"
               className="text-sm text-slate-500 hover:text-red-600"
             >
-              Close this ticket
+              {t("ticket.close")}
             </button>
           </ActionForm>
         </div>
       ) : (
         <p className="text-center text-sm text-slate-400">
-          This ticket is closed.
+          {t("ticket.closed")}
         </p>
       )}
     </div>

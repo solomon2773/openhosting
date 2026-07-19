@@ -3,47 +3,48 @@ import { requireAdmin } from "@/lib/auth";
 import { getSetting } from "@/lib/settings";
 import { logout } from "@/lib/actions/auth";
 import { syncExtensions } from "@/lib/extensions/registry";
+import { getT, type MessageKey } from "@/lib/i18n";
 
-const NAV: Array<{ heading: string; items: { href: string; label: string }[] }> = [
+const NAV: Array<{ heading: MessageKey; items: { href: string; label: MessageKey }[] }> = [
   {
-    heading: "Overview",
-    items: [{ href: "/admin", label: "Dashboard" }],
+    heading: "admin.nav.overview",
+    items: [{ href: "/admin", label: "admin.nav.dashboard" }],
   },
   {
-    heading: "Billing",
+    heading: "admin.nav.billing",
     items: [
-      { href: "/admin/orders", label: "Orders" },
-      { href: "/admin/invoices", label: "Invoices" },
-      { href: "/admin/services", label: "Services" },
-      { href: "/admin/coupons", label: "Coupons" },
-      { href: "/admin/taxes", label: "Tax rates" },
-      { href: "/admin/currencies", label: "Currencies" },
+      { href: "/admin/orders", label: "admin.nav.orders" },
+      { href: "/admin/invoices", label: "admin.nav.invoices" },
+      { href: "/admin/services", label: "admin.nav.services" },
+      { href: "/admin/coupons", label: "admin.nav.coupons" },
+      { href: "/admin/taxes", label: "admin.nav.taxes" },
+      { href: "/admin/currencies", label: "admin.nav.currencies" },
     ],
   },
   {
-    heading: "Catalog",
+    heading: "admin.nav.catalog",
     items: [
-      { href: "/admin/categories", label: "Categories" },
-      { href: "/admin/products", label: "Products" },
+      { href: "/admin/categories", label: "admin.nav.categories" },
+      { href: "/admin/products", label: "admin.nav.products" },
     ],
   },
   {
-    heading: "Customers",
+    heading: "admin.nav.customers",
     items: [
-      { href: "/admin/users", label: "Users" },
-      { href: "/admin/tickets", label: "Tickets" },
+      { href: "/admin/users", label: "admin.nav.users" },
+      { href: "/admin/tickets", label: "admin.nav.tickets" },
     ],
   },
   {
-    heading: "System",
+    heading: "admin.nav.system",
     items: [
-      { href: "/admin/announcements", label: "Announcements" },
-      { href: "/admin/extensions", label: "Extensions" },
-      { href: "/admin/api-keys", label: "API keys" },
-      { href: "/admin/oauth-clients", label: "OAuth clients" },
-      { href: "/admin/email-templates", label: "Email templates" },
-      { href: "/admin/settings", label: "Settings" },
-      { href: "/admin/audit-log", label: "Audit log" },
+      { href: "/admin/announcements", label: "admin.nav.announcements" },
+      { href: "/admin/extensions", label: "admin.nav.extensions" },
+      { href: "/admin/api-keys", label: "admin.nav.apiKeys" },
+      { href: "/admin/oauth-clients", label: "admin.nav.oauthClients" },
+      { href: "/admin/email-templates", label: "admin.nav.emailTemplates" },
+      { href: "/admin/settings", label: "admin.nav.settings" },
+      { href: "/admin/audit-log", label: "admin.nav.auditLog" },
     ],
   },
 ];
@@ -54,7 +55,10 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const user = await requireAdmin();
-  const companyName = await getSetting("company_name");
+  const [companyName, t] = await Promise.all([
+    getSetting("company_name"),
+    getT(),
+  ]);
   // make sure newly shipped drivers appear without a migration step
   await syncExtensions();
 
@@ -71,7 +75,7 @@ export default async function AdminLayout({
           {NAV.map((group) => (
             <div key={group.heading}>
               <p className="px-3 pb-1 text-xs font-semibold tracking-wide text-slate-500 uppercase">
-                {group.heading}
+                {t(group.heading)}
               </p>
               {group.items.map((item) => (
                 <Link
@@ -79,7 +83,7 @@ export default async function AdminLayout({
                   href={item.href}
                   className="block rounded-lg px-3 py-1.5 text-sm hover:bg-slate-800 hover:text-white"
                 >
-                  {item.label}
+                  {t(item.label)}
                 </Link>
               ))}
             </div>
@@ -91,11 +95,11 @@ export default async function AdminLayout({
           </p>
           <div className="mt-2 flex items-center justify-between">
             <Link href="/dashboard" className="text-slate-400 hover:text-white">
-              Client area
+              {t("admin.nav.clientArea")}
             </Link>
             <form action={logout}>
               <button type="submit" className="text-slate-400 hover:text-white">
-                Sign out
+                {t("dash.nav.signOut")}
               </button>
             </form>
           </div>

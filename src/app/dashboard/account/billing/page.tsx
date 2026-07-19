@@ -1,4 +1,5 @@
 import { requireUser } from "@/lib/auth";
+import { getT } from "@/lib/i18n";
 import { db } from "@/lib/db";
 import {
   completePaymentMethodSetup,
@@ -19,6 +20,7 @@ export default async function BillingMethodsPage({
   searchParams: Promise<{ gateway?: string; session_id?: string }>;
 }) {
   const user = await requireUser();
+  const t = await getT();
   const { gateway, session_id } = await searchParams;
 
   // returning from a hosted card-setup flow
@@ -37,10 +39,9 @@ export default async function BillingMethodsPage({
 
   return (
     <div className="max-w-2xl">
-      <h1 className="text-2xl font-bold">Billing methods</h1>
+      <h1 className="text-2xl font-bold">{t("billing.title")}</h1>
       <p className="mt-1 text-sm text-slate-500">
-        Renewal invoices are charged automatically against your default
-        payment method on their due date.
+        {t("billing.subtitle")}
       </p>
 
       {setupResult === true && (
@@ -65,13 +66,13 @@ export default async function BillingMethodsPage({
                 {method.brand ?? method.gateway} •••• {method.last4 ?? "????"}
                 {method.isDefault && (
                   <span className="badge ml-2 bg-brand-100 text-brand-700">
-                    Default
+                    {t("billing.default")}
                   </span>
                 )}
               </p>
               <p className="text-sm text-slate-500">
                 {method.expMonth && method.expYear
-                  ? `Expires ${String(method.expMonth).padStart(2, "0")}/${method.expYear}`
+                  ? `${t("billing.expires")} ${String(method.expMonth).padStart(2, "0")}/${method.expYear}`
                   : method.gateway}
               </p>
             </div>
@@ -83,7 +84,7 @@ export default async function BillingMethodsPage({
                     type="submit"
                     className="text-sm text-brand-600 hover:underline"
                   >
-                    Make default
+                    {t("billing.makeDefault")}
                   </button>
                 </form>
               )}
@@ -93,7 +94,7 @@ export default async function BillingMethodsPage({
                   type="submit"
                   className="text-sm text-red-600 hover:underline"
                 >
-                  Remove
+                  {t("billing.remove")}
                 </button>
               </form>
             </div>
@@ -101,7 +102,7 @@ export default async function BillingMethodsPage({
         ))}
         {methods.length === 0 && (
           <p className="p-8 text-center text-sm text-slate-400">
-            No saved payment methods.
+            {t("billing.empty")}
           </p>
         )}
       </div>
@@ -111,7 +112,7 @@ export default async function BillingMethodsPage({
           <form key={g.slug} action={beginCardSetup}>
             <input type="hidden" name="gateway" value={g.slug} />
             <SubmitButton className="btn-primary">
-              Add card via {g.name}
+              {t("billing.addCard")} {g.name}
             </SubmitButton>
           </form>
         ))}

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
+import { getT } from "@/lib/i18n";
 import { db } from "@/lib/db";
 import { formatDate, formatMoney, CYCLE_LABELS } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
@@ -9,6 +10,7 @@ export const metadata = { title: "Services" };
 
 export default async function ServicesPage() {
   const user = await requireUser();
+  const t = await getT();
   const [currency, services] = await Promise.all([
     getSetting("currency"),
     db.service.findMany({
@@ -20,16 +22,16 @@ export default async function ServicesPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Your services</h1>
+      <h1 className="text-2xl font-bold">{t("services.title")}</h1>
       <div className="card mt-6">
         <table className="table-base">
           <thead>
             <tr>
-              <th>Product</th>
-              <th>Billing</th>
-              <th>Price</th>
-              <th>Next due</th>
-              <th>Status</th>
+              <th>{t("table.product")}</th>
+              <th>{t("table.billing")}</th>
+              <th>{t("table.price")}</th>
+              <th>{t("table.nextDue")}</th>
+              <th>{t("table.status")}</th>
             </tr>
           </thead>
           <tbody>
@@ -54,7 +56,7 @@ export default async function ServicesPage() {
             {services.length === 0 && (
               <tr>
                 <td colSpan={5} className="py-8 text-center text-slate-400">
-                  No services yet.
+                  {t("services.empty")}
                 </td>
               </tr>
             )}
