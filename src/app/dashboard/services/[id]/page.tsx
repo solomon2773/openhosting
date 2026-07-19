@@ -4,8 +4,9 @@ import { db } from "@/lib/db";
 import { formatDate, formatMoney, CYCLE_LABELS } from "@/lib/format";
 import { getSetting } from "@/lib/settings";
 import { StatusBadge } from "@/components/status-badge";
-import { requestServiceCancellation } from "@/lib/actions/client";
+import { requestServiceCancellation, upgradeService } from "@/lib/actions/client";
 import { ActionForm, SubmitButton } from "@/components/forms";
+import { upgradeOptionsForService } from "@/lib/services/upgrades";
 
 export default async function ServiceDetailPage({
   params,
@@ -31,6 +32,7 @@ export default async function ServiceDetailPage({
 
   const config =
     (service.config as Array<{ option: string; label: string }> | null) ?? [];
+  const upgrades = await upgradeOptionsForService(service.id);
 
   return (
     <div>
@@ -118,6 +120,46 @@ export default async function ServiceDetailPage({
           </tbody>
         </table>
       </div>
+
+      {upgrades.length > 0 && service.status === "ACTIVE" && (
+        <div className="card mt-6 p-5">
+          <h2 className="font-semibold">Upgrade this service</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Upgrades are prorated for the remainder of the current billing
+            period and take effect immediately after payment.
+          </p>
+          <div className="mt-4 space-y-3">
+            {upgrades.map((upgrade) => (
+              <div
+                key={upgrade.toProductId}
+                className="flex items-center justify-between rounded-lg border border-slate-200 p-4"
+              >
+                <div>
+                  <p className="font-medium">{upgrade.toProductName}</p>
+                  <p className="text-sm text-slate-500">
+                    {formatMoney(upgrade.newPrice, upgrade.currency)} /{" "}
+                    {CYCLE_LABELS[service.cycle].toLowerCase()} ·{" "}
+                    {upgrade.proratedCharge > 0
+                      ? `${formatMoney(upgrade.proratedCharge, upgrade.currency)} due now`
+                      : "no charge"}
+                  </p>
+                </div>
+                <ActionForm action={upgradeService} className="m-0">
+                  <input type="hidden" name="serviceId" value={service.id} />
+                  <input
+                    type="hidden"
+                    name="toProductId"
+                    value={upgrade.toProductId}
+                  />
+                  <SubmitButton className="btn-secondary">
+                    {upgrade.proratedCharge > 0 ? "Upgrade" : "Switch"}
+                  </SubmitButton>
+                </ActionForm>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {service.status !== "CANCELLED" &&
         (service.cancelAtPeriodEnd ? (

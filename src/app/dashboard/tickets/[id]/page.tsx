@@ -16,7 +16,7 @@ export default async function TicketDetailPage({
     include: {
       messages: {
         orderBy: { createdAt: "asc" },
-        include: { user: true },
+        include: { user: true, attachments: true },
       },
     },
   });

@@ -67,6 +67,132 @@ export async function payWithCredits(
   return {};
 }
 
+// ── Stored payment methods / auto-charge ────────────────────────────────────
+
+async function resolveStorableGateway(gatewaySlug: string) {
+  const extension = await db.extension.findUnique({
+    where: { slug: gatewaySlug },
+  });
+  if (!extension?.enabled || extension.type !== "GATEWAY") return null;
+  const driver = getGatewayDriver(gatewaySlug);
+  if (!driver?.createSetupRedirect) return null;
+  return { extension, driver };
+}
+
+// Gateways (enabled) that support storing payment methods.
+export async function storableGateways() {
+  const enabled = await db.extension.findMany({
+    where: { type: "GATEWAY", enabled: true },
+  });
+  return enabled.filter((e) => getGatewayDriver(e.slug)?.createSetupRedirect);
+}
+
+export async function startPaymentMethodSetup(
+  userId: string,
+  gatewaySlug: string,
+): Promise<string> {
+  const resolved = await resolveStorableGateway(gatewaySlug);
+  if (!resolved) throw new Error("Gateway does not support stored methods");
+  const user = await db.user.findUnique({ where: { id: userId } });
+  if (!user) throw new Error("User not found");
+  const existing = await db.storedPaymentMethod.findFirst({
+    where: { userId, gateway: gatewaySlug },
+  });
+  const baseUrl = await getSetting("company_url");
+  const { url } = await resolved.driver.createSetupRedirect!(
+    user,
+    existing?.customerId ?? null,
+    extensionConfig(resolved.extension),
+    {
+      success: `${baseUrl}/dashboard/account/billing?gateway=${gatewaySlug}`,
+      cancel: `${baseUrl}/dashboard/account/billing`,
+    },
+  );
+  return url;
+}
+
+export async function completePaymentMethodSetup(
+  userId: string,
+  gatewaySlug: string,
+  sessionRef: string,
+): Promise<boolean> {
+  const resolved = await resolveStorableGateway(gatewaySlug);
+  if (!resolved?.driver.completeSetup) return false;
+  const details = await resolved.driver.completeSetup(
+    sessionRef,
+    extensionConfig(resolved.extension),
+  );
+  if (!details) return false;
+  // avoid duplicates if the success page is reloaded
+  const existing = await db.storedPaymentMethod.findFirst({
+    where: { userId, gateway: gatewaySlug, methodId: details.methodId },
+  });
+  if (existing) return true;
+  await db.storedPaymentMethod.updateMany({
+    where: { userId },
+    data: { isDefault: false },
+  });
+  await db.storedPaymentMethod.create({
+    data: {
+      userId,
+      gateway: gatewaySlug,
+      customerId: details.customerId,
+      methodId: details.methodId,
+      brand: details.brand,
+      last4: details.last4,
+      expMonth: details.expMonth,
+      expYear: details.expYear,
+      isDefault: true,
+    },
+  });
+  return true;
+}
+
+const MAX_AUTO_CHARGE_ATTEMPTS = 3;
+
+// Off-session charging of due invoices against default stored methods.
+// Called from the billing cron.
+export async function autoChargeDueInvoices(): Promise<number> {
+  const invoices = await db.invoice.findMany({
+    where: {
+      status: "PENDING",
+      dueAt: { lte: new Date() },
+      autoChargeAttempts: { lt: MAX_AUTO_CHARGE_ATTEMPTS },
+      user: { paymentMethods: { some: { isDefault: true } } },
+    },
+    include: {
+      user: { include: { paymentMethods: { where: { isDefault: true } } } },
+    },
+  });
+
+  let charged = 0;
+  for (const invoice of invoices) {
+    const method = invoice.user.paymentMethods[0];
+    if (!method) continue;
+    const resolved = await resolveStorableGateway(method.gateway);
+    if (!resolved?.driver.chargeStored) continue;
+    try {
+      const result = await resolved.driver.chargeStored(
+        invoice,
+        { customerId: method.customerId, methodId: method.methodId },
+        extensionConfig(resolved.extension),
+      );
+      if (result) {
+        await markInvoicePaid(invoice.id, method.gateway, result.transactionId);
+        charged++;
+        continue;
+      }
+    } catch {
+      // fall through to attempt counting
+    }
+    await db.invoice.update({
+      where: { id: invoice.id },
+      data: { autoChargeAttempts: { increment: 1 } },
+    });
+  }
+  return charged;
+}
+
 export async function handleGatewayWebhook(
   request: Request,
   gatewaySlug: string,

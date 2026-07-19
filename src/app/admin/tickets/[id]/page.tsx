@@ -18,7 +18,10 @@ export default async function AdminTicketDetailPage({
       where: { id },
       include: {
         user: true,
-        messages: { orderBy: { createdAt: "asc" }, include: { user: true } },
+        messages: {
+          orderBy: { createdAt: "asc" },
+          include: { user: true, attachments: true },
+        },
       },
     }),
     db.user.findMany({ where: { roleId: { not: null } } }),

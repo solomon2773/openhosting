@@ -3,12 +3,14 @@ import { requireUser } from "@/lib/auth";
 import { getSetting } from "@/lib/settings";
 import { logout } from "@/lib/actions/auth";
 import { formatMoney } from "@/lib/format";
+import { unreadCount } from "@/lib/services/notifications";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/dashboard/services", label: "Services" },
   { href: "/dashboard/invoices", label: "Invoices" },
   { href: "/dashboard/tickets", label: "Support" },
+  { href: "/dashboard/account/billing", label: "Billing" },
   { href: "/dashboard/account", label: "Account" },
 ];
 
@@ -18,9 +20,10 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const user = await requireUser();
-  const [companyName, currency] = await Promise.all([
+  const [companyName, currency, unread] = await Promise.all([
     getSetting("company_name"),
     getSetting("currency"),
+    unreadCount(user.id),
   ]);
 
   return (
@@ -42,6 +45,17 @@ export default async function DashboardLayout({
               {item.label}
             </Link>
           ))}
+          <Link
+            href="/dashboard/notifications"
+            className="flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          >
+            Notifications
+            {unread > 0 && (
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-600 px-1.5 text-xs font-semibold text-white">
+                {unread}
+              </span>
+            )}
+          </Link>
           {user.roleId && (
             <Link
               href="/admin"

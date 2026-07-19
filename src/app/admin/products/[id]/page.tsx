@@ -5,9 +5,11 @@ import { SERVER_DRIVERS } from "@/lib/extensions/registry";
 import {
   addConfigOption,
   addConfigOptionValue,
+  addUpgradePath,
   deleteConfigOption,
   deleteConfigOptionValue,
   deleteProduct,
+  removeUpgradePath,
   saveProduct,
 } from "@/lib/actions/admin";
 import { ActionForm, SubmitButton } from "@/components/forms";
@@ -38,9 +40,16 @@ export default async function AdminProductEditPage({
               orderBy: { sortOrder: "asc" },
               include: { values: { orderBy: { sortOrder: "asc" } } },
             },
+            upgradesFrom: { include: { toProduct: true } },
           },
         }),
   ]);
+  const allProducts = isNew
+    ? []
+    : await db.product.findMany({
+        where: { id: { not: id } },
+        orderBy: { name: "asc" },
+      });
   if (!isNew && !product) notFound();
 
   const serverConfig = (product?.serverConfig ?? {}) as Record<string, string>;
@@ -341,6 +350,54 @@ export default async function AdminProductEditPage({
               </form>
             </div>
           ))}
+
+          <div className="mt-6 border-t border-slate-200 pt-4">
+            <h3 className="font-semibold">Upgrade paths</h3>
+            <p className="mt-1 text-sm text-slate-500">
+              Products customers can upgrade this product's services to
+              (prorated for the remaining period).
+            </p>
+            <ul className="mt-3 space-y-1">
+              {product!.upgradesFrom.map((path) => (
+                <li
+                  key={path.id}
+                  className="flex items-center justify-between text-sm"
+                >
+                  <span>→ {path.toProduct.name}</span>
+                  <form action={removeUpgradePath}>
+                    <input type="hidden" name="id" value={path.id} />
+                    <input
+                      type="hidden"
+                      name="fromProductId"
+                      value={product!.id}
+                    />
+                    <button
+                      type="submit"
+                      className="text-red-600 hover:underline"
+                    >
+                      ×
+                    </button>
+                  </form>
+                </li>
+              ))}
+              {product!.upgradesFrom.length === 0 && (
+                <li className="text-sm text-slate-400">No upgrade paths.</li>
+              )}
+            </ul>
+            <form action={addUpgradePath} className="mt-3 flex items-end gap-2">
+              <input type="hidden" name="fromProductId" value={product!.id} />
+              <select name="toProductId" className="input w-64">
+                {allProducts.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+              <button type="submit" className="btn-secondary">
+                Add path
+              </button>
+            </form>
+          </div>
 
           <form
             action={addConfigOption}

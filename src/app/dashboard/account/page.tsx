@@ -1,9 +1,15 @@
 import { requireUser } from "@/lib/auth";
+import { db } from "@/lib/db";
 import {
   beginTwoFactorSetup,
   disableTwoFactor,
 } from "@/lib/actions/auth";
-import { changePassword, updateProfile } from "@/lib/actions/client";
+import {
+  changePassword,
+  saveNotificationPreferences,
+  updateProfile,
+} from "@/lib/actions/client";
+import { NOTIFICATION_TYPES } from "@/lib/services/notifications";
 import { ActionForm, SubmitButton } from "@/components/forms";
 
 export const metadata = { title: "Account" };
@@ -22,6 +28,11 @@ const PROFILE_FIELDS = [
 
 export default async function AccountPage() {
   const user = await requireUser();
+  const prefs = await db.notificationPreference.findMany({
+    where: { userId: user.id },
+  });
+  const prefFor = (type: string) =>
+    prefs.find((p) => p.type === type) ?? { email: true, inApp: true };
 
   return (
     <div className="max-w-3xl space-y-8">
@@ -84,6 +95,46 @@ export default async function AccountPage() {
             </div>
           </div>
           <SubmitButton className="btn-primary">Update password</SubmitButton>
+        </ActionForm>
+      </div>
+
+      <div className="card p-6">
+        <h2 className="mb-4 font-semibold">Notifications</h2>
+        <ActionForm action={saveNotificationPreferences}>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs text-slate-500 uppercase">
+                <th className="pb-2">Event</th>
+                <th className="pb-2 text-center">Email</th>
+                <th className="pb-2 text-center">In-app</th>
+              </tr>
+            </thead>
+            <tbody>
+              {NOTIFICATION_TYPES.map(({ type, label }) => {
+                const pref = prefFor(type);
+                return (
+                  <tr key={type} className="border-t border-slate-100">
+                    <td className="py-2">{label}</td>
+                    <td className="py-2 text-center">
+                      <input
+                        type="checkbox"
+                        name={`email_${type}`}
+                        defaultChecked={pref.email}
+                      />
+                    </td>
+                    <td className="py-2 text-center">
+                      <input
+                        type="checkbox"
+                        name={`inapp_${type}`}
+                        defaultChecked={pref.inApp}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <SubmitButton className="btn-primary">Save preferences</SubmitButton>
         </ActionForm>
       </div>
 

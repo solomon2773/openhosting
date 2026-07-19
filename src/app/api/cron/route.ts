@@ -5,6 +5,7 @@ import {
   generateRenewalInvoices,
   suspendOverdueServices,
 } from "@/lib/billing";
+import { autoChargeDueInvoices } from "@/lib/services/payments";
 
 // Recurring billing tick. Call this every hour (Kubernetes CronJob, Vercel
 // cron, or plain crontab) with `Authorization: Bearer $CRON_SECRET`.
@@ -15,11 +16,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const invoicesCreated = await generateRenewalInvoices();
+  const autoCharged = await autoChargeDueInvoices();
   const endOfTermCancelled = await cancelEndOfTermServices();
   const suspended = await suspendOverdueServices();
   const cancelled = await cancelStaleSuspendedServices();
   return NextResponse.json({
     invoicesCreated,
+    autoCharged,
     endOfTermCancelled,
     suspended,
     cancelled,

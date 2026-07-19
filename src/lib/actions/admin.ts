@@ -190,6 +190,25 @@ export async function deleteConfigOptionValue(
   revalidatePath(`/admin/products/${str(formData, "productId")}`);
 }
 
+export async function addUpgradePath(formData: FormData): Promise<void> {
+  await requireAdmin("products");
+  const fromProductId = str(formData, "fromProductId");
+  const toProductId = str(formData, "toProductId");
+  if (!toProductId || fromProductId === toProductId) return;
+  await db.productUpgrade.upsert({
+    where: { fromProductId_toProductId: { fromProductId, toProductId } },
+    update: {},
+    create: { fromProductId, toProductId },
+  });
+  revalidatePath(`/admin/products/${fromProductId}`);
+}
+
+export async function removeUpgradePath(formData: FormData): Promise<void> {
+  await requireAdmin("products");
+  await db.productUpgrade.delete({ where: { id: str(formData, "id") } });
+  revalidatePath(`/admin/products/${str(formData, "fromProductId")}`);
+}
+
 // ── Users ───────────────────────────────────────────────────────────────────
 
 export async function saveUser(

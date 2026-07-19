@@ -46,6 +46,52 @@ model User {
   apiKeys         ApiKey[]
   auditLogs       AuditLog[]
   tokens          VerificationToken[]
+  paymentMethods  StoredPaymentMethod[]
+  notifications   Notification[]
+  notificationPreferences NotificationPreference[]
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String // invoice_created, invoice_paid, service_activated, …
+  title     String
+  body      String?
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, readAt])
+}
+
+// Per-user, per-event channel opt-outs (defaults to both channels on).
+model NotificationPreference {
+  userId String
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type   String
+  email  Boolean @default(true)
+  inApp  Boolean @default(true)
+
+  @@id([userId, type])
+}
+
+// A card/mandate stored at a gateway for off-session auto-charging.
+model StoredPaymentMethod {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gateway    String // driver slug, e.g. "stripe"
+  customerId String // gateway-side customer reference
+  methodId   String // gateway-side payment method reference
+  brand      String?
+  last4      String?
+  expMonth   Int?
+  expYear    Int?
+  isDefault  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
 }
 
 // Staff role. A user with any role is staff; permissions ["*"] = full admin.
@@ -124,6 +170,8 @@ model Product {
   orderItems    OrderItem[]
   services      Service[]
   coupons       Coupon[]
+  upgradesFrom  ProductUpgrade[] @relation("UpgradeFrom")
+  upgradesTo    ProductUpgrade[] @relation("UpgradeTo")
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
@@ -171,6 +219,17 @@ model ConfigOptionValue {
 }
 
 // ── Orders & services ───────────────────────────────────────────────────────
+
+// Admin-defined allowed upgrade path between two products.
+model ProductUpgrade {
+  id            String  @id @default(cuid())
+  fromProductId String
+  fromProduct   Product @relation("UpgradeFrom", fields: [fromProductId], references: [id], onDelete: Cascade)
+  toProductId   String
+  toProduct     Product @relation("UpgradeTo", fields: [toProductId], references: [id], onDelete: Cascade)
+
+  @@unique([fromProductId, toProductId])
+}
 
 enum OrderStatus {
   PENDING
@@ -277,6 +336,8 @@ model Invoice {
   total     Decimal       @default(0) @db.Decimal(12, 2)
   dueAt     DateTime?
   paidAt    DateTime?
+  // failed off-session charge attempts (capped by the billing engine)
+  autoChargeAttempts Int @default(0)
   items     InvoiceItem[]
   payments  Payment[]
   createdAt DateTime      @default(now())
@@ -295,6 +356,8 @@ model InvoiceItem {
   unitPrice   Decimal  @db.Decimal(12, 2)
   serviceId   String?
   service     Service? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  // side effects on payment, e.g. {"upgradeServiceId": "...", "toProductId": "...", "newPrice": 12.5}
+  metadata    Json?
 }
 
 enum PaymentStatus {
@@ -391,13 +454,26 @@ model Ticket {
 }
 
 model TicketMessage {
-  id        String   @id @default(cuid())
-  ticketId  String
-  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  message   String
-  createdAt DateTime @default(now())
+  id          String             @id @default(cuid())
+  ticketId    String
+  ticket      Ticket             @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message     String
+  attachments TicketAttachment[]
+  createdAt   DateTime           @default(now())
+}
+
+// Stored in the database to stay infrastructure-free (5 MB cap per file).
+model TicketAttachment {
+  id        String        @id @default(cuid())
+  messageId String
+  message   TicketMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  filename  String
+  mimeType  String
+  size      Int
+  data      Bytes
+  createdAt DateTime      @default(now())
 }
 
 // ── Platform ────────────────────────────────────────────────────────────────

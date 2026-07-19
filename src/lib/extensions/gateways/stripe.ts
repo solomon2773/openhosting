@@ -1,18 +1,23 @@
 import type { GatewayDriver } from "@/lib/extensions/types";
 
-// Stripe Checkout via the REST API — no SDK dependency needed.
+// Stripe via the REST API — no SDK dependency needed.
 async function stripeRequest(
   secretKey: string,
   path: string,
-  params: Record<string, string>,
+  params?: Record<string, string>,
+  method: "POST" | "GET" = "POST",
 ) {
-  const res = await fetch(`https://api.stripe.com/v1${path}`, {
-    method: "POST",
+  const query =
+    method === "GET" && params ? `?${new URLSearchParams(params)}` : "";
+  const res = await fetch(`https://api.stripe.com/v1${path}${query}`, {
+    method,
     headers: {
       Authorization: `Bearer ${secretKey}`,
-      "Content-Type": "application/x-www-form-urlencoded",
+      ...(method === "POST"
+        ? { "Content-Type": "application/x-www-form-urlencoded" }
+        : {}),
     },
-    body: new URLSearchParams(params),
+    body: method === "POST" && params ? new URLSearchParams(params) : undefined,
   });
   if (!res.ok) {
     const body = await res.text();
@@ -60,5 +65,68 @@ export const stripeGateway: GatewayDriver = {
     const invoiceId = event.data.object.metadata?.invoice_id;
     if (!invoiceId) return null;
     return { invoiceId, transactionId: event.data.object.id };
+  },
+
+  // ── Stored payment methods / auto-charge ──────────────────────────────────
+
+  async createSetupRedirect(user, existingCustomerId, config, urls) {
+    const customerId =
+      existingCustomerId ??
+      (
+        await stripeRequest(config.secret_key, "/customers", {
+          email: user.email,
+          name: `${user.firstName} ${user.lastName}`,
+          "metadata[user_id]": user.id,
+        })
+      ).id;
+    const session = await stripeRequest(config.secret_key, "/checkout/sessions", {
+      mode: "setup",
+      customer: customerId,
+      "payment_method_types[0]": "card",
+      success_url: `${urls.success}${urls.success.includes("?") ? "&" : "?"}session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: urls.cancel,
+    });
+    return { url: session.url as string };
+  },
+
+  async completeSetup(sessionRef, config) {
+    const session = await stripeRequest(
+      config.secret_key,
+      `/checkout/sessions/${encodeURIComponent(sessionRef)}`,
+      { "expand[]": "setup_intent" },
+      "GET",
+    );
+    const methodId = session.setup_intent?.payment_method;
+    const customerId = session.customer;
+    if (!methodId || !customerId) return null;
+    const method = await stripeRequest(
+      config.secret_key,
+      `/payment_methods/${methodId}`,
+      undefined,
+      "GET",
+    );
+    return {
+      customerId: String(customerId),
+      methodId: String(methodId),
+      brand: method.card?.brand,
+      last4: method.card?.last4,
+      expMonth: method.card?.exp_month,
+      expYear: method.card?.exp_year,
+    };
+  },
+
+  async chargeStored(invoice, method, config) {
+    const intent = await stripeRequest(config.secret_key, "/payment_intents", {
+      amount: String(Math.round(Number(invoice.total) * 100)),
+      currency: invoice.currency.toLowerCase(),
+      customer: method.customerId,
+      payment_method: method.methodId,
+      off_session: "true",
+      confirm: "true",
+      description: `Invoice #${invoice.number}`,
+      "metadata[invoice_id]": invoice.id,
+    });
+    if (intent.status !== "succeeded") return null;
+    return { transactionId: intent.id as string };
   },
 };

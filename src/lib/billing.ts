@@ -2,7 +2,7 @@ import "server-only";
 import { db } from "@/lib/db";
 import { addCycle, formatMoney, formatDate } from "@/lib/format";
 import { getSetting, getSettings } from "@/lib/settings";
-import { sendTemplate } from "@/lib/mail";
+import { notifyUser } from "@/lib/services/notifications";
 import {
   provisionCreate,
   provisionSuspend,
@@ -28,10 +28,15 @@ async function activateService(serviceId: string) {
   if (!service) return;
   await provisionCreate(service);
   const url = await getSetting("company_url");
-  await sendTemplate(service.user.email, "service_activated", {
-    name: service.user.firstName,
-    product: service.product.name,
-    url: `${url}/dashboard/services/${service.id}`,
+  await notifyUser(service.user, "service_activated", {
+    title: `${service.product.name} is now active`,
+    link: `/dashboard/services/${service.id}`,
+    templateKey: "service_activated",
+    templateVars: {
+      name: service.user.firstName,
+      product: service.product.name,
+      url: `${url}/dashboard/services/${service.id}`,
+    },
   });
 }
 
@@ -75,6 +80,22 @@ export async function markInvoicePaid(
   ]);
 
   for (const item of invoice.items) {
+    // upgrade invoices switch the service's product on payment
+    const upgradeMeta = item.metadata as {
+      upgradeServiceId?: string;
+      toProductId?: string;
+      newPrice?: number;
+    } | null;
+    if (upgradeMeta?.upgradeServiceId && upgradeMeta.toProductId) {
+      const { applyUpgrade } = await import("@/lib/services/upgrades");
+      await applyUpgrade(
+        upgradeMeta.upgradeServiceId,
+        upgradeMeta.toProductId,
+        upgradeMeta.newPrice ?? 0,
+      );
+      continue;
+    }
+
     const service = item.service;
     if (!service) continue;
     if (service.status === "PENDING") {
@@ -103,10 +124,15 @@ export async function markInvoicePaid(
     }
   }
 
-  await sendTemplate(invoice.user.email, "invoice_paid", {
-    name: invoice.user.firstName,
-    invoice: String(invoice.number),
-    total: formatMoney(invoice.total, invoice.currency),
+  await notifyUser(invoice.user, "invoice_paid", {
+    title: `Payment received for invoice #${invoice.number}`,
+    link: `/dashboard/invoices/${invoice.id}`,
+    templateKey: "invoice_paid",
+    templateVars: {
+      name: invoice.user.firstName,
+      invoice: String(invoice.number),
+      total: formatMoney(invoice.total, invoice.currency),
+    },
   });
   return db.invoice.findUnique({ where: { id: invoiceId } });
 }
@@ -162,13 +188,18 @@ export async function generateRenewalInvoices(): Promise<number> {
       },
     });
     created++;
-    await sendTemplate(service.user.email, "invoice_created", {
-      name: service.user.firstName,
-      invoice: String(invoice.number),
-      company: settings.company_name,
-      total: formatMoney(total, currency),
-      due: formatDate(invoice.dueAt),
-      link: `${settings.company_url}/dashboard/invoices/${invoice.id}`,
+    await notifyUser(service.user, "invoice_created", {
+      title: `Invoice #${invoice.number} is due ${formatDate(invoice.dueAt)}`,
+      link: `/dashboard/invoices/${invoice.id}`,
+      templateKey: "invoice_created",
+      templateVars: {
+        name: service.user.firstName,
+        invoice: String(invoice.number),
+        company: settings.company_name,
+        total: formatMoney(total, currency),
+        due: formatDate(invoice.dueAt),
+        link: `${settings.company_url}/dashboard/invoices/${invoice.id}`,
+      },
     });
   }
   return created;
@@ -212,9 +243,14 @@ export async function suspendOverdueServices(): Promise<number> {
       data: { status: "SUSPENDED", suspendedAt: new Date() },
     });
     await provisionSuspend(service);
-    await sendTemplate(service.user.email, "service_suspended", {
-      name: service.user.firstName,
-      product: service.product.name,
+    await notifyUser(service.user, "service_suspended", {
+      title: `${service.product.name} was suspended (unpaid invoice)`,
+      link: `/dashboard/invoices`,
+      templateKey: "service_suspended",
+      templateVars: {
+        name: service.user.firstName,
+        product: service.product.name,
+      },
     });
   }
   return services.length;

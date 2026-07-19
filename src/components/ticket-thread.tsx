@@ -3,8 +3,12 @@ import { closeTicket, replyTicket } from "@/lib/actions/client";
 import { ActionForm, SubmitButton } from "@/components/forms";
 import type { Ticket, TicketMessage, User } from "@prisma/client";
 
+type Attachment = { id: string; filename: string; size: number };
 type ThreadTicket = Ticket & {
-  messages: (TicketMessage & { user: User & { roleId?: string | null } })[];
+  messages: (TicketMessage & {
+    user: User & { roleId?: string | null };
+    attachments?: Attachment[];
+  })[];
 };
 
 // Shared between the client area and the admin panel.
@@ -45,6 +49,23 @@ export function TicketThread({
               <p className="text-sm whitespace-pre-line text-slate-700">
                 {message.message}
               </p>
+              {(message.attachments?.length ?? 0) > 0 && (
+                <ul className="mt-3 flex flex-wrap gap-2">
+                  {message.attachments!.map((attachment) => (
+                    <li key={attachment.id}>
+                      <a
+                        href={`/api/attachments/${attachment.id}`}
+                        className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs text-brand-600 hover:underline"
+                      >
+                        📎 {attachment.filename}
+                        <span className="text-slate-400">
+                          ({Math.ceil(attachment.size / 1024)} KB)
+                        </span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           );
         })}
@@ -62,6 +83,18 @@ export function TicketThread({
               className="input"
               placeholder="Write your reply…"
             />
+            <div>
+              <label className="label" htmlFor="attachments">
+                Attachments (up to 3 files, 5 MB each)
+              </label>
+              <input
+                id="attachments"
+                name="attachments"
+                type="file"
+                multiple
+                className="block w-full text-sm text-slate-500 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm"
+              />
+            </div>
             <div className="flex gap-3">
               <SubmitButton className="btn-primary">Send reply</SubmitButton>
             </div>

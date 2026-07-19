@@ -61,6 +61,31 @@ export async function changePassword(
   return { success: "Password updated." };
 }
 
+export async function saveNotificationPreferences(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const user = await requireUser();
+  const { NOTIFICATION_TYPES } = await import("@/lib/services/notifications");
+  for (const { type } of NOTIFICATION_TYPES) {
+    await db.notificationPreference.upsert({
+      where: { userId_type: { userId: user.id, type } },
+      update: {
+        email: formData.get(`email_${type}`) === "on",
+        inApp: formData.get(`inapp_${type}`) === "on",
+      },
+      create: {
+        userId: user.id,
+        type,
+        email: formData.get(`email_${type}`) === "on",
+        inApp: formData.get(`inapp_${type}`) === "on",
+      },
+    });
+  }
+  revalidatePath("/dashboard/account");
+  return { success: "Notification preferences saved." };
+}
+
 // ── Invoices ────────────────────────────────────────────────────────────────
 
 export async function payInvoice(
@@ -145,6 +170,26 @@ export async function requestServiceCancellation(
   return { success: "Your service has been cancelled." };
 }
 
+export async function upgradeService(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const user = await requireUser();
+  const serviceId = String(formData.get("serviceId") ?? "");
+  const toProductId = String(formData.get("toProductId") ?? "");
+  const { requestUpgrade } = await import("@/lib/services/upgrades");
+  const result = await requestUpgrade(user.id, serviceId, toProductId);
+  if (result.error) return { error: result.error };
+  await audit("service.upgrade_requested", {
+    userId: user.id,
+    targetType: "service",
+    targetId: serviceId,
+  });
+  if (result.invoiceId) redirect(`/dashboard/invoices/${result.invoiceId}`);
+  revalidatePath(`/dashboard/services/${serviceId}`);
+  return { success: "Your service has been switched to the new plan." };
+}
+
 // ── Tickets ─────────────────────────────────────────────────────────────────
 
 const ticketSchema = z.object({
@@ -172,7 +217,15 @@ export async function createTicket(
         create: { userId: user.id, message: parsed.data.message },
       },
     },
+    include: { messages: true },
   });
+  const files = formData.getAll("attachments") as File[];
+  if (files.length > 0) {
+    const { saveTicketAttachments } = await import(
+      "@/lib/services/attachments"
+    );
+    await saveTicketAttachments(ticket.messages[0].id, files);
+  }
   await audit("ticket.created", {
     userId: user.id,
     targetType: "ticket",
@@ -200,22 +253,37 @@ export async function replyTicket(
     return { error: "Ticket not found." };
   }
 
+  const created = await db.ticketMessage.create({
+    data: { ticketId, userId: user.id, message },
+  });
   await db.ticket.update({
     where: { id: ticketId },
-    data: {
-      status: isStaff ? "ANSWERED" : "CUSTOMER_REPLY",
-      messages: { create: { userId: user.id, message } },
-    },
+    data: { status: isStaff ? "ANSWERED" : "CUSTOMER_REPLY" },
   });
+  const files = formData.getAll("attachments") as File[];
+  if (files.length > 0) {
+    const { saveTicketAttachments } = await import(
+      "@/lib/services/attachments"
+    );
+    const attachError = await saveTicketAttachments(created.id, files);
+    if (attachError) return { error: attachError };
+  }
 
-  // Notify the other party
+  // Notify the customer of staff replies
   if (isStaff && ticket.userId !== user.id) {
     const settings = await getSettings(["company_url"]);
-    await sendTemplate(ticket.user.email, "ticket_reply", {
-      name: ticket.user.firstName,
-      ticket: String(ticket.number),
-      subject: ticket.subject,
-      link: `${settings.company_url}/dashboard/tickets/${ticket.id}`,
+    const { notifyUser } = await import("@/lib/services/notifications");
+    await notifyUser(ticket.user, "ticket_reply", {
+      title: `New reply on ticket #${ticket.number}`,
+      body: ticket.subject,
+      link: `/dashboard/tickets/${ticket.id}`,
+      templateKey: "ticket_reply",
+      templateVars: {
+        name: ticket.user.firstName,
+        ticket: String(ticket.number),
+        subject: ticket.subject,
+        link: `${settings.company_url}/dashboard/tickets/${ticket.id}`,
+      },
     });
   }
   revalidatePath(`/dashboard/tickets/${ticketId}`);
