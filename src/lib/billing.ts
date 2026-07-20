@@ -18,7 +18,7 @@ const DAY_MS = 86_400_000;
 
 const serviceInclude = {
   user: true,
-  product: { include: { serverExtension: true } },
+  product: { include: { serverExtension: true, resaleExtension: true } },
 } as const;
 
 async function activateService(serviceId: string) {
@@ -28,6 +28,8 @@ async function activateService(serviceId: string) {
   });
   if (!service) return;
   await provisionCreate(service);
+  const { resaleProvision } = await import("@/lib/services/resale");
+  await resaleProvision(service);
   const url = await getSetting("company_url");
   await notifyUser(service.user, "service_activated", {
     title: `${service.product.name} is now active`,
@@ -129,6 +131,8 @@ export async function markInvoicePaid(
         include: serviceInclude,
       });
       if (service.status === "SUSPENDED") await provisionUnsuspend(updated);
+      const { resaleRenew } = await import("@/lib/services/resale");
+      await resaleRenew(updated);
     }
   }
 
@@ -254,6 +258,8 @@ export async function cancelEndOfTermServices(): Promise<number> {
       data: { status: "CANCELLED", cancelledAt: new Date() },
     });
     await provisionTerminate(service);
+    const { resaleCancel } = await import("@/lib/services/resale");
+    await resaleCancel(service);
   }
   return services.length;
 }
@@ -301,6 +307,7 @@ export async function cancelStaleSuspendedServices(): Promise<number> {
       data: { status: "CANCELLED", cancelledAt: new Date() },
     });
     await provisionTerminate(service);
+    { const { resaleCancel } = await import("@/lib/services/resale"); await resaleCancel(service); }
     // void any open invoices for this service
     await db.invoice.updateMany({
       where: { status: "PENDING", items: { some: { serviceId: service.id } } },

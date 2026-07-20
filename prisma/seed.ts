@@ -315,6 +315,19 @@ async function main() {
     { slug: "digitalocean", name: "DigitalOcean", type: "SERVER" as const },
     { slug: "vultr", name: "Vultr", type: "SERVER" as const },
     { slug: "linode", name: "Linode", type: "SERVER" as const },
+    { slug: "openstack", name: "OpenStack", type: "SERVER" as const },
+    { slug: "onapp", name: "OnApp", type: "SERVER" as const },
+    { slug: "virtuozzo", name: "Virtuozzo", type: "SERVER" as const },
+    { slug: "vmware-vcloud", name: "VMware vCloud Director", type: "SERVER" as const },
+    { slug: "enom", name: "Enom (domains)", type: "RESALE" as const },
+    { slug: "resellerclub", name: "ResellerClub (domains)", type: "RESALE" as const },
+    { slug: "namecheap", name: "Namecheap (domains)", type: "RESALE" as const },
+    { slug: "opensrs", name: "OpenSRS (domains)", type: "RESALE" as const },
+    { slug: "openprovider", name: "Openprovider (domains)", type: "RESALE" as const },
+    { slug: "gogetssl", name: "GoGetSSL (SSL certificates)", type: "RESALE" as const },
+    { slug: "software-license", name: "Software license (cPanel / LiteSpeed / Softaculous)", type: "RESALE" as const },
+    { slug: "microsoft365", name: "Microsoft 365 (seats)", type: "RESALE" as const },
+    { slug: "google-workspace", name: "Google Workspace (seats)", type: "RESALE" as const },
   ];
   for (const driver of drivers) {
     await db.extension.upsert({

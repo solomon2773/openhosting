@@ -78,6 +78,36 @@ export interface ServerDriver {
   terminate(service: Service, config: Record<string, string>): Promise<void>;
 }
 
+// A resale driver fulfils non-server products — domains, SSL certs, software
+// licenses, M365/Workspace seats. Unlike servers, these capture extra input
+// at checkout (a domain, a CSR, a seat count) and have a register/renew/
+// cancel lifecycle instead of create/suspend/terminate.
+export interface ResaleDriver {
+  slug: string;
+  name: string;
+  category: "DOMAIN" | "SSL" | "LICENSE" | "M365";
+  configFields: ConfigField[];
+  productConfigFields: ConfigField[];
+  // Fields the customer fills in at checkout (domain name, CSR, seats…).
+  checkoutFields: ConfigField[];
+  // Provision on first payment. `resaleData` is the customer's checkoutFields
+  // input; returns an external reference stored on the service.
+  provision(
+    service: Service & { user: User },
+    config: Record<string, string>,
+    productConfig: Record<string, string>,
+    resaleData: Record<string, string>,
+  ): Promise<string | null>;
+  // Renew for another term on renewal payment (optional; no-op if absent).
+  renew?(
+    service: Service,
+    config: Record<string, string>,
+    productConfig: Record<string, string>,
+  ): Promise<void>;
+  // Cancel/revoke on termination.
+  cancel(service: Service, config: Record<string, string>): Promise<void>;
+}
+
 export function extensionConfig(ext: Extension): Record<string, string> {
   return (ext.config ?? {}) as Record<string, string>;
 }

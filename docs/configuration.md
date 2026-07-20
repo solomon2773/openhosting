@@ -43,6 +43,23 @@ Settings** — no redeploy needed:
 - **Webmin (Virtualmin)** — Webmin URL + credentials; per-product plan,
   template and feature set. Add a config option with env key `DOMAIN` so
   customers enter their domain at checkout.
+- **Enterprise virt** — OpenStack & Virtuozzo (Keystone auth + Nova),
+  OnApp (email + API key), VMware vCloud Director (org credentials); each
+  with per-product flavor/template/network settings.
+
+## Product resale (domains, SSL, licenses, M365)
+
+Resale integrations fulfil non-server products. Assign one to a product
+under its **Resale extension** setting; the customer enters the required
+details at checkout (a domain, a CSR, a seat count) and the driver
+registers/renews on payment. Configure under **Admin → Extensions**:
+
+- **Domains** — Enom, ResellerClub, Namecheap, OpenSRS, Openprovider
+- **SSL** — GoGetSSL (customer pastes a CSR + approver email)
+- **Licenses** — cPanel / LiteSpeed / Softaculous / CloudLinux / Imunify360
+  via your distributor's reseller API (license binds to a server IP)
+- **Seats** — Microsoft 365 (Partner Center CSP) and Google Workspace
+  (Reseller API)
 
 ## Billing cron
 

@@ -1,6 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
-import type { GatewayDriver, ServerDriver } from "@/lib/extensions/types";
+import type { GatewayDriver, ServerDriver, ResaleDriver } from "@/lib/extensions/types";
 import { stripeGateway } from "@/lib/extensions/gateways/stripe";
 import { paypalGateway } from "@/lib/extensions/gateways/paypal";
 import { mollieGateway } from "@/lib/extensions/gateways/mollie";
@@ -43,6 +43,19 @@ import { hetznerServer } from "@/lib/extensions/servers/hetzner";
 import { digitalOceanServer } from "@/lib/extensions/servers/digitalocean";
 import { vultrServer } from "@/lib/extensions/servers/vultr";
 import { linodeServer } from "@/lib/extensions/servers/linode";
+import { openStackServer } from "@/lib/extensions/servers/openstack";
+import { onAppServer } from "@/lib/extensions/servers/onapp";
+import { virtuozzoServer } from "@/lib/extensions/servers/virtuozzo";
+import { vmwareVcloudServer } from "@/lib/extensions/servers/vmware-vcloud";
+import { enomResale } from "@/lib/extensions/resale/enom";
+import { resellerClubResale } from "@/lib/extensions/resale/resellerclub";
+import { namecheapResale } from "@/lib/extensions/resale/namecheap";
+import { openSrsResale } from "@/lib/extensions/resale/opensrs";
+import { openProviderResale } from "@/lib/extensions/resale/openprovider";
+import { goGetSslResale } from "@/lib/extensions/resale/gogetssl";
+import { licenseResale } from "@/lib/extensions/resale/licenses";
+import { microsoft365Resale } from "@/lib/extensions/resale/microsoft365";
+import { googleWorkspaceResale } from "@/lib/extensions/resale/google-workspace";
 
 export const GATEWAY_DRIVERS: GatewayDriver[] = [
   stripeGateway,
@@ -90,6 +103,22 @@ export const SERVER_DRIVERS: ServerDriver[] = [
   digitalOceanServer,
   vultrServer,
   linodeServer,
+  openStackServer,
+  onAppServer,
+  virtuozzoServer,
+  vmwareVcloudServer,
+];
+
+export const RESALE_DRIVERS: ResaleDriver[] = [
+  enomResale,
+  resellerClubResale,
+  namecheapResale,
+  openSrsResale,
+  openProviderResale,
+  goGetSslResale,
+  licenseResale,
+  microsoft365Resale,
+  googleWorkspaceResale,
 ];
 
 export function getGatewayDriver(slug: string): GatewayDriver | undefined {
@@ -98,6 +127,10 @@ export function getGatewayDriver(slug: string): GatewayDriver | undefined {
 
 export function getServerDriver(slug: string): ServerDriver | undefined {
   return SERVER_DRIVERS.find((d) => d.slug === slug);
+}
+
+export function getResaleDriver(slug: string): ResaleDriver | undefined {
+  return RESALE_DRIVERS.find((d) => d.slug === slug);
 }
 
 // Ensure every known driver has an Extension row so it can be configured.
@@ -114,6 +147,13 @@ export async function syncExtensions() {
       where: { slug: driver.slug },
       update: {},
       create: { slug: driver.slug, name: driver.name, type: "SERVER" },
+    });
+  }
+  for (const driver of RESALE_DRIVERS) {
+    await db.extension.upsert({
+      where: { slug: driver.slug },
+      update: {},
+      create: { slug: driver.slug, name: driver.name, type: "RESALE" },
     });
   }
 }

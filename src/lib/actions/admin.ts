@@ -93,6 +93,15 @@ export async function saveProduct(
     }
   }
 
+  const resaleExtensionId = str(formData, "resaleExtensionId") || null;
+  let resaleConfig: Record<string, string> | undefined;
+  if (resaleExtensionId) {
+    resaleConfig = {};
+    for (const [key, value] of formData.entries()) {
+      if (key.startsWith("rc_")) resaleConfig[key.slice(3)] = String(value);
+    }
+  }
+
   const stockRaw = str(formData, "stock");
   const data = {
     name,
@@ -105,6 +114,8 @@ export async function saveProduct(
     sortOrder: Number(formData.get("sortOrder") ?? 0),
     serverExtensionId,
     ...(serverConfig !== undefined ? { serverConfig } : {}),
+    resaleExtensionId,
+    ...(resaleConfig !== undefined ? { resaleConfig } : {}),
   };
 
   const product = id

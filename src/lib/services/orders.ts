@@ -13,10 +13,13 @@ export type CartLine = {
   quantity: number;
   // chosen config option value ids
   optionValues: string[];
+  // resale checkout input (domain, CSR, seats…) keyed by field key
+  resaleData?: Record<string, string>;
 };
 
 export type PricedLine = CartLine & {
   name: string;
+  resaleData?: Record<string, string>;
   unitPrice: number;
   setupFee: number;
   lineTotal: number;
@@ -69,6 +72,7 @@ export async function priceCart(lines: CartLine[]): Promise<PricedLine[]> {
       ...line,
       quantity,
       name: product.name,
+      resaleData: line.resaleData,
       unitPrice,
       setupFee: Number(price.setupFee),
       lineTotal: round(unitPrice * quantity + Number(price.setupFee)),
@@ -215,6 +219,7 @@ export async function placeOrder(
             currency: totals.currency,
             quantity: l.quantity,
             config: l.config,
+            resaleData: l.resaleData ?? undefined,
           },
         }),
       ),

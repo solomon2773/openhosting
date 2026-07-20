@@ -171,6 +171,10 @@ model Product {
   // per-product affiliate commission override (null = program default)
   affiliateCommissionType  CommissionType?
   affiliateCommissionValue Decimal?        @db.Decimal(12, 2)
+  // Resale extension (domain/SSL/license/M365) that fulfils this product.
+  resaleExtensionId String?
+  resaleExtension   Extension? @relation("ProductResaleExtension", fields: [resaleExtensionId], references: [id], onDelete: SetNull)
+  resaleConfig      Json?
 
   prices        ProductPrice[]
   configOptions ConfigOption[]
@@ -321,6 +325,8 @@ model Service {
   cancelledAt DateTime?
   // customer requested cancellation at the end of the paid period
   cancelAtPeriodEnd Boolean @default(false)
+  // resale products capture extra input at checkout (domain, CSR, seats…)
+  resaleData Json?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -522,6 +528,7 @@ model Setting {
 enum ExtensionType {
   GATEWAY
   SERVER
+  RESALE
 }
 
 // Installed integration: payment gateway or server-provisioning backend.
@@ -533,6 +540,7 @@ model Extension {
   enabled   Boolean       @default(false)
   config    Json          @default("{}")
   products  Product[]
+  resaleProducts Product[]  @relation("ProductResaleExtension")
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
 }

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { SERVER_DRIVERS } from "@/lib/extensions/registry";
+import { SERVER_DRIVERS, RESALE_DRIVERS } from "@/lib/extensions/registry";
 import {
   addConfigOption,
   addConfigOptionValue,
@@ -27,9 +27,10 @@ export default async function AdminProductEditPage({
   const { id } = await params;
   const isNew = id === "new";
 
-  const [categories, serverExtensions, product] = await Promise.all([
+  const [categories, serverExtensions, resaleExtensions, product] = await Promise.all([
     db.category.findMany({ orderBy: { sortOrder: "asc" } }),
     db.extension.findMany({ where: { type: "SERVER" }, orderBy: { name: "asc" } }),
+    db.extension.findMany({ where: { type: "RESALE" }, orderBy: { name: "asc" } }),
     isNew
       ? null
       : db.product.findUnique({
@@ -53,6 +54,7 @@ export default async function AdminProductEditPage({
   if (!isNew && !product) notFound();
 
   const serverConfig = (product?.serverConfig ?? {}) as Record<string, string>;
+  const resaleConfig = (product?.resaleConfig ?? {}) as Record<string, string>;
   const priceFor = (cycle: BillingCycle) =>
     product?.prices.find((p) => p.cycle === cycle);
 
@@ -241,6 +243,63 @@ export default async function AdminProductEditPage({
                         id={`sc_${field.key}`}
                         name={`sc_${field.key}`}
                         defaultValue={serverConfig[field.key] ?? ""}
+                        className="input"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </details>
+            );
+          })}
+
+          <h2 className="border-t border-slate-200 pt-4 font-semibold">
+            Product resale
+          </h2>
+          <p className="-mt-2 text-sm text-slate-500">
+            For domain, SSL, license or M365 products fulfilled by a resale
+            integration instead of a server.
+          </p>
+          <div>
+            <label className="label" htmlFor="resaleExtensionId">
+              Resale extension
+            </label>
+            <select
+              id="resaleExtensionId"
+              name="resaleExtensionId"
+              className="input"
+              defaultValue={product?.resaleExtensionId ?? ""}
+            >
+              <option value="">None</option>
+              {resaleExtensions.map((ext) => (
+                <option key={ext.id} value={ext.id}>
+                  {ext.name}
+                  {ext.enabled ? "" : " (disabled)"}
+                </option>
+              ))}
+            </select>
+          </div>
+          {RESALE_DRIVERS.map((driver) => {
+            const ext = resaleExtensions.find((e) => e.slug === driver.slug);
+            if (!ext || driver.productConfigFields.length === 0) return null;
+            return (
+              <details
+                key={driver.slug}
+                className="rounded-lg border border-slate-200 p-4"
+                open={product?.resaleExtensionId === ext.id}
+              >
+                <summary className="cursor-pointer text-sm font-medium">
+                  {driver.name} product settings
+                </summary>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  {driver.productConfigFields.map((field) => (
+                    <div key={field.key}>
+                      <label className="label" htmlFor={`rc_${field.key}`}>
+                        {field.label}
+                      </label>
+                      <input
+                        id={`rc_${field.key}`}
+                        name={`rc_${field.key}`}
+                        defaultValue={resaleConfig[field.key] ?? ""}
                         className="input"
                       />
                     </div>

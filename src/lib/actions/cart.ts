@@ -23,8 +23,19 @@ export async function addToCart(formData: FormData): Promise<void> {
     .map(String)
     .filter(Boolean);
 
+  const resaleData: Record<string, string> = {};
+  for (const [key, value] of formData.entries()) {
+    if (key.startsWith("resale_")) resaleData[key.slice(7)] = String(value);
+  }
+
   const cart = await readCart();
-  cart.push({ productId, cycle, quantity, optionValues });
+  cart.push({
+    productId,
+    cycle,
+    quantity,
+    optionValues,
+    resaleData: Object.keys(resaleData).length ? resaleData : undefined,
+  });
   await writeCart(cart);
   redirect("/cart");
 }

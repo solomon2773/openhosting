@@ -26,18 +26,28 @@ const CYCLE_MONTHS: Record<string, number> = {
   BIENNIALLY: 24,
 };
 
+type ResaleField = {
+  key: string;
+  label: string;
+  type: string;
+  required?: boolean;
+  help?: string;
+};
+
 export function ProductConfigurator({
   productId,
   prices,
   options,
   allowQuantity,
   currency,
+  resaleFields = [],
 }: {
   productId: string;
   prices: Price[];
   options: Option[];
   allowQuantity: boolean;
   currency: string;
+  resaleFields?: ResaleField[];
 }) {
   const [cycle, setCycle] = useState(prices[0]?.cycle ?? "MONTHLY");
   const [quantity, setQuantity] = useState(1);
@@ -73,6 +83,45 @@ export function ProductConfigurator({
       {Object.values(selected).map((valueId) => (
         <input key={valueId} type="hidden" name="optionValue" value={valueId} />
       ))}
+
+      {resaleFields.length > 0 && (
+        <div className="space-y-4 rounded-lg border border-slate-200 p-4">
+          {resaleFields.map((field) =>
+            field.type === "textarea" || field.key === "csr" ? (
+              <div key={field.key}>
+                <label className="label" htmlFor={`resale_${field.key}`}>
+                  {field.label}
+                </label>
+                <textarea
+                  id={`resale_${field.key}`}
+                  name={`resale_${field.key}`}
+                  required={field.required}
+                  rows={4}
+                  className="input font-mono text-xs"
+                />
+                {field.help && (
+                  <p className="mt-1 text-xs text-slate-400">{field.help}</p>
+                )}
+              </div>
+            ) : (
+              <div key={field.key}>
+                <label className="label" htmlFor={`resale_${field.key}`}>
+                  {field.label}
+                </label>
+                <input
+                  id={`resale_${field.key}`}
+                  name={`resale_${field.key}`}
+                  required={field.required}
+                  className="input"
+                />
+                {field.help && (
+                  <p className="mt-1 text-xs text-slate-400">{field.help}</p>
+                )}
+              </div>
+            ),
+          )}
+        </div>
+      )}
 
       <div>
         <span className="label">Billing cycle</span>

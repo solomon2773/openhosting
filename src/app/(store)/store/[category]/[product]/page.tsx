@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { convertFromBase, getActiveCurrency } from "@/lib/services/currency";
 import { ProductConfigurator } from "./configurator";
+import { getResaleDriver } from "@/lib/extensions/registry";
 
 export default async function ProductPage({
   params,
@@ -20,10 +21,15 @@ export default async function ProductPage({
           orderBy: { sortOrder: "asc" },
           include: { values: { orderBy: { sortOrder: "asc" } } },
         },
+        resaleExtension: true,
       },
     }),
   ]);
   if (!product || product.hidden) notFound();
+  const resaleDriver = product.resaleExtension?.enabled
+    ? getResaleDriver(product.resaleExtension.slug)
+    : undefined;
+  const resaleFields = resaleDriver?.checkoutFields ?? [];
   const soldOut = product.stock !== null && product.stock <= 0;
 
   return (
@@ -65,6 +71,7 @@ export default async function ProductPage({
                   price: convertFromBase(Number(v.price), currency),
                 })),
               }))}
+              resaleFields={resaleFields}
             />
           )}
         </div>

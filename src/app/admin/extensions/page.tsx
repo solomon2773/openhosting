@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import {
   GATEWAY_DRIVERS,
   SERVER_DRIVERS,
+  RESALE_DRIVERS,
   syncExtensions,
 } from "@/lib/extensions/registry";
 import { saveExtension } from "@/lib/actions/admin";
@@ -56,7 +57,7 @@ export default async function AdminExtensionsPage() {
   await requireAdmin("extensions");
   await syncExtensions();
   const extensions = await db.extension.findMany({ orderBy: { name: "asc" } });
-  const drivers = [...GATEWAY_DRIVERS, ...SERVER_DRIVERS];
+  const drivers = [...GATEWAY_DRIVERS, ...SERVER_DRIVERS, ...RESALE_DRIVERS];
 
   return (
     <div>
@@ -76,7 +77,7 @@ export default async function AdminExtensionsPage() {
                 <div>
                   <h2 className="font-semibold">{ext.name}</h2>
                   <p className="text-xs text-slate-400 uppercase">
-                    {ext.type === "GATEWAY" ? "Payment gateway" : "Server integration"}
+                    {ext.type === "GATEWAY" ? "Payment gateway" : ext.type === "SERVER" ? "Server integration" : "Product resale"}
                   </p>
                 </div>
                 <span

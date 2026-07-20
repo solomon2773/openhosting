@@ -41,9 +41,14 @@ dependency. No license fees, no legacy stack.
 - Account credit balance, zero-total auto-activation, manual admin payments
 
 **Provisioning**
-- 23 server integrations: game panels (Pterodactyl, Pelican, WISP, TCAdmin2), VPS/cloud (Proxmox, SolusVM, Convoy, VirtFusion, Virtualizor, Hetzner, DigitalOcean, Vultr, Linode) and web panels (cPanel/WHM, DirectAdmin, Plesk, Enhance, HestiaCP, CyberPanel, CWP, InterWorx, ISPConfig, Webmin/Virtualmin)
+- 27 server integrations: game panels (Pterodactyl, Pelican, WISP, TCAdmin2), VPS/cloud (Proxmox, SolusVM, Convoy, VirtFusion, Virtualizor, Hetzner, DigitalOcean, Vultr, Linode), enterprise virt (OpenStack, OnApp, Virtuozzo, VMware vCloud) and web panels (cPanel/WHM, DirectAdmin, Plesk, Enhance, HestiaCP, CyberPanel, CWP, InterWorx, ISPConfig, Webmin/Virtualmin)
 - Automatic create / suspend / unsuspend / terminate on billing events
 - Config options map to environment variables on the provisioned server
+
+**Product resale** (beyond servers)
+- Domain registrars: Enom, ResellerClub, Namecheap, OpenSRS, Openprovider (register/renew)
+- SSL certificates (GoGetSSL), software licenses (cPanel/LiteSpeed/Softaculous/CloudLinux), and Microsoft 365 / Google Workspace seat resale
+- Customers enter the required details (domain, CSR, seat count) at checkout
 
 **Client area**
 - Dashboard, services, invoices with online payment, account credit
