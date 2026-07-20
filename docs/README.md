@@ -57,7 +57,8 @@ then follow [Installation](getting-started/installation.md).
 ## Operations
 
 - [Migrating from another panel](migrations.md) — WHMCS & Paymenter importers
-- [CLI & scripts](cli.md) — npm scripts and maintenance tasks
+- [CLI](cli.md) — the `oh` command-line tool
+- [MCP server](mcp.md) — AI-assistant tools for managing OpenHosting
 - [FAQ](faq.md) — common questions
 - [Contributing](contributing.md) — help improve OpenHosting
 

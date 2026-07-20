@@ -70,8 +70,8 @@ dependency. No license fees, no legacy stack.
 
 **Platform**
 - **6 built-in themes** switchable at runtime, plus a two-file recipe for custom ones
-- **Multi-language UI** (English & Dutch shipped) with a storefront language picker
-- REST API (`/api/v1`) with scoped API keys
+- **Multi-language UI** (English, Dutch, French, German, Spanish) with a storefront language picker
+- REST API (`/api/v1`) with scoped API keys, plus a **CLI** (`oh`) and an **MCP server** for AI assistants
 - One-command importers to migrate from other billing panels
 - Email notifications via SMTP with templated, per-event messages
 - Docker image, docker-compose stack, Kubernetes manifests with HPA + CronJob
@@ -143,6 +143,7 @@ Full documentation lives in **[docs/](docs/README.md)** — start with the
 | [Fraud protection](docs/guides/fraud.md) | [Affiliates](docs/guides/affiliates.md) | [Tickets](docs/guides/tickets.md) |
 | [REST API](docs/api/rest-api.md) | [OAuth / SSO](docs/api/oauth.md) | [Writing extensions](docs/extensions/writing-extensions.md) |
 | [Themes](docs/guides/themes.md) | [Migrations](docs/migrations.md) | [FAQ](docs/faq.md) |
+| [CLI](docs/cli.md) | [MCP server](docs/mcp.md) | |
 
 ## 🏗 Architecture
 

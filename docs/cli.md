@@ -1,58 +1,93 @@
-# CLI & scripts
+# CLI
 
-OpenHosting is operated through npm scripts and the Prisma CLI. This page lists
-what's available.
+OpenHosting ships a command-line tool, `oh`, for managing a deployment from the
+terminal. It talks to the deployment's [REST API](api/rest-api.md), so it works
+locally or against any remote install.
 
-## npm scripts
+## Setup
 
-| Command | Purpose |
-|---|---|
-| `npm run dev` | Development server with hot reload |
-| `npm run build` | Production build |
-| `npm run start` | Serve the production build |
-| `npm run typecheck` | TypeScript type check (`tsc --noEmit`) |
-| `npm run db:generate` | Generate the Prisma client |
-| `npm run db:push` | Sync the schema to the database (development) |
-| `npm run db:migrate` | Apply migrations (`prisma migrate deploy`, production) |
-| `npm run db:seed` | Seed demo data |
-| `npm run import:whmcs` | Import from a WHMCS database ([Migrations](migrations.md)) |
-| `npm run import:paymenter` | Import from a Paymenter database ([Migrations](migrations.md)) |
-
-## Database migrations
-
-OpenHosting uses Prisma Migrate. In production the container applies pending
-migrations on boot; to run them manually:
+The CLI needs a base URL and an API key (create one under
+**Admin → API keys**). Provide them via environment variables:
 
 ```bash
-npm run db:migrate
+export OPENHOSTING_URL="https://billing.example.com"
+export OPENHOSTING_API_KEY="oh_xxxxxxxx…"
+export OPENHOSTING_CRON_SECRET="…"   # only for `oh cron run`
 ```
 
-To create a new migration after changing `prisma/schema.prisma` (development —
-needs a `SHADOW_DATABASE_URL`):
+…or save them once:
 
 ```bash
-SHADOW_DATABASE_URL="postgresql://…/shadow" \
-  npx prisma migrate diff --from-migrations prisma/migrations \
-  --to-schema prisma/schema.prisma --script > prisma/migrations/<name>/migration.sql
+oh config set --url https://billing.example.com --api-key oh_… --cron-secret …
+oh config show
 ```
 
-## Seeding
+## Running it
 
-`npm run db:seed` is idempotent — safe to run repeatedly. It creates the admin
-and demo accounts, sample catalog, and registers all extensions as disabled
-rows. Override the admin password with `SEED_ADMIN_PASSWORD`.
-
-## Capturing documentation screenshots
-
-The repository includes a Playwright script that captures the storefront and
-admin screenshots used in the README against a running, seeded instance:
+From a clone of the repo:
 
 ```bash
-BASE_URL=http://localhost:3000 npx tsx scripts/screenshots.ts
+node cli/oh.mjs <command>       # or: npm run cli -- <command>
 ```
 
-## Environment loading
+Installing globally exposes it as `oh`:
 
-The standalone scripts (seed, importers, screenshots) load `.env` automatically.
-In CI or containers, set the variables in the environment instead. See the
-[environment reference](getting-started/environment.md).
+```bash
+npm install -g .        # or `npm link` in the repo
+oh users list
+```
+
+It's a zero-dependency Node script (Node 24+), so there's no build step.
+
+## Commands
+
+```
+oh users     list [--q <search>] | get <id>
+             create --email <e> --password <p> --first <f> --last <l> [--country <c>]
+oh products  list
+oh categories list
+oh orders    list
+oh invoices  list [--status <s>] | get <id> | pay <id>
+oh services  list [--status <s>] [--user <id>] | get <id>
+             suspend <id> | unsuspend <id> | terminate <id>
+             usage <id> <quantity> [--desc <text>]
+oh coupons   list | create --code <c> --type PERCENT|FIXED --value <n>
+oh quotes    list
+oh tickets   list
+oh kb        search <query>
+oh cron      run
+```
+
+Add `--json` to any command for raw JSON instead of a table.
+
+## Examples
+
+```bash
+# Find a customer and inspect a service
+oh users list --q alice
+oh services list --user cku123…
+oh services get cku456…
+
+# Suspend a service and re-activate it later
+oh services suspend cku456…
+oh services unsuspend cku456…
+
+# Record metered usage from a script
+oh services usage cku456… 12.5 --desc "March bandwidth (GB)"
+
+# Mark an offline payment and run the billing tick
+oh invoices pay ckuinv…
+oh cron run
+
+# Answer a support question
+oh kb search "reset password"
+```
+
+## Scopes
+
+The CLI can only do what its API key's [permission scopes](api/rest-api.md)
+allow. A read-only key can list and get; write actions
+(`create`, `pay`, `suspend`, `usage`, …) need the corresponding `:write` scope.
+
+For letting an AI assistant drive the same operations, see the
+[MCP server](mcp.md).
