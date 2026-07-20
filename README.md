@@ -37,11 +37,11 @@ dependency. No license fees, no legacy stack.
 **Billing engine**
 - Orders → invoices → services, fully automated
 - Automatic renewal invoicing, overdue suspension and termination (cron-driven)
-- Payment gateways as drop-in drivers: **Stripe**, **PayPal**, **Mollie**, **bank transfer** included
+- 19 payment gateways: cards (Stripe, PayPal, Mollie, Square, Authorize.net, Braintree), crypto (Coinbase Commerce, NOWPayments, BTCPay, CoinGate), SEPA (GoCardless), merchant-of-record (Lemon Squeezy), and regional (Razorpay, Mercado Pago/PIX, Paystack, Flutterwave, Midtrans, Xendit)
 - Account credit balance, zero-total auto-activation, manual admin payments
 
 **Provisioning**
-- 10 server integrations included: **Pterodactyl, Proxmox VE, Convoy, VirtFusion, cPanel/WHM, DirectAdmin, Virtualizor, Plesk, Enhance, Webmin/Virtualmin**
+- 23 server integrations: game panels (Pterodactyl, Pelican, WISP, TCAdmin2), VPS/cloud (Proxmox, SolusVM, Convoy, VirtFusion, Virtualizor, Hetzner, DigitalOcean, Vultr, Linode) and web panels (cPanel/WHM, DirectAdmin, Plesk, Enhance, HestiaCP, CyberPanel, CWP, InterWorx, ISPConfig, Webmin/Virtualmin)
 - Automatic create / suspend / unsuspend / terminate on billing events
 - Config options map to environment variables on the provisioned server
 
@@ -49,6 +49,13 @@ dependency. No license fees, no legacy stack.
 - Dashboard, services, invoices with online payment, account credit
 - Support tickets with departments, priorities and email notifications
 - Profile, password management and **TOTP two-factor auth** with QR enrolment
+
+**Fraud prevention**
+- Order review queue (hold risky orders before provisioning), ban lists (email/domain/IP/country), disposable-email blocking
+- Velocity limits, MaxMind minFraud & FraudLabs Pro scoring, checkout captcha, EU VAT (VIES) reverse charge
+
+**Affiliate program**
+- Referral links, per-product or default commissions, one-time or recurring, payout threshold, affiliate & admin dashboards
 
 **Admin panel**
 - Revenue dashboard, orders, invoices (mark paid / cancel), service lifecycle controls
