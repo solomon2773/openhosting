@@ -14,6 +14,7 @@ import {
   verifyPassword,
 } from "@/lib/auth";
 import { verifyTotp, generateTotpSecret } from "@/lib/totp";
+import { headers } from "next/headers";
 import { getSetting, getSettings } from "@/lib/settings";
 import { sendTemplate } from "@/lib/mail";
 import { audit } from "@/lib/audit";
@@ -138,6 +139,13 @@ export async function register(
   if (await db.user.findUnique({ where: { email } })) {
     return { error: "An account with this email already exists." };
   }
+  {
+    const { isRegistrationBlocked } = await import("@/lib/services/fraud");
+    const hdrs = await headers();
+    const ip = hdrs.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
+    const blocked = await isRegistrationBlocked(email, ip);
+    if (blocked) return { error: blocked };
+  }
   const user = await db.user.create({
     data: {
       email,
@@ -147,6 +155,15 @@ export async function register(
     },
   });
   await audit("auth.register", { userId: user.id });
+
+  // affiliate referral attribution from the ?ref cookie
+  {
+    const { attributeReferral, REF_COOKIE } = await import(
+      "@/lib/services/affiliates"
+    );
+    const cookieStore = await cookies();
+    await attributeReferral(user.id, cookieStore.get(REF_COOKIE)?.value ?? null);
+  }
 
   const settings = await getSettings(["company_name", "company_url"]);
   await sendTemplate(user.email, "welcome", {

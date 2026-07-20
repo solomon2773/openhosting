@@ -33,11 +33,13 @@ const NAV: Array<{ heading: MessageKey; items: { href: string; label: MessageKey
     items: [
       { href: "/admin/users", label: "admin.nav.users" },
       { href: "/admin/tickets", label: "admin.nav.tickets" },
+      { href: "/admin/affiliates", label: "admin.nav.affiliates" },
     ],
   },
   {
     heading: "admin.nav.system",
     items: [
+      { href: "/admin/fraud", label: "admin.nav.fraud" },
       { href: "/admin/announcements", label: "admin.nav.announcements" },
       { href: "/admin/extensions", label: "admin.nav.extensions" },
       { href: "/admin/api-keys", label: "admin.nav.apiKeys" },

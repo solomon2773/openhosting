@@ -18,6 +18,28 @@ export const SETTING_DEFAULTS: Record<string, string> = {
   // Cloudflare Turnstile captcha on the registration form (blank = off)
   turnstile_site_key: "",
   turnstile_secret: "",
+  turnstile_on_checkout: "false",
+  // ── Fraud prevention ──
+  fraud_review_all: "false",
+  // external risk score (0-99) at or above which orders go to manual review
+  fraud_risk_threshold: "75",
+  // max orders per IP per hour before review (0 = off)
+  fraud_velocity_max: "5",
+  fraud_require_verified_email: "false",
+  fraud_block_disposable: "true",
+  maxmind_account_id: "",
+  maxmind_license_key: "",
+  fraudlabs_api_key: "",
+  // EU B2B reverse charge for validated VAT ids
+  vat_reverse_charge: "false",
+  company_country: "US",
+  // ── Affiliate program ──
+  affiliate_enabled: "true",
+  affiliate_commission_type: "PERCENT",
+  affiliate_commission_value: "10",
+  // "true" = commission on every invoice, "false" = first invoice only
+  affiliate_recurring: "false",
+  affiliate_payout_threshold: "25",
   mail_from: "billing@example.com",
   smtp_host: "",
   smtp_port: "587",

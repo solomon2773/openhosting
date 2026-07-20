@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { addCycle, formatMoney, formatDate } from "@/lib/format";
 import { getSetting, getSettings } from "@/lib/settings";
 import { notifyUser } from "@/lib/services/notifications";
+import { creditCommission } from "@/lib/services/affiliates";
 import {
   provisionCreate,
   provisionSuspend,
@@ -53,6 +54,12 @@ export async function markInvoicePaid(
   });
   if (!invoice || invoice.status === "PAID") return invoice;
 
+  // orders held for fraud review keep their services pending until approved
+  const order = invoice.orderId
+    ? await db.order.findUnique({ where: { id: invoice.orderId } })
+    : null;
+  const held = order?.reviewStatus === "PENDING_REVIEW";
+
   const now = new Date();
   await db.$transaction([
     db.invoice.update({
@@ -80,6 +87,7 @@ export async function markInvoicePaid(
   ]);
 
   for (const item of invoice.items) {
+    if (held) break;
     // upgrade invoices switch the service's product on payment
     const upgradeMeta = item.metadata as {
       upgradeServiceId?: string;
@@ -124,6 +132,7 @@ export async function markInvoicePaid(
     }
   }
 
+  await creditCommission(invoice);
   await notifyUser(invoice.user, "invoice_paid", {
     title: `Payment received for invoice #${invoice.number}`,
     link: `/dashboard/invoices/${invoice.id}`,
@@ -135,6 +144,29 @@ export async function markInvoicePaid(
     },
   });
   return db.invoice.findUnique({ where: { id: invoiceId } });
+}
+
+// Activates a fraud-approved order's services whose invoices are already paid.
+export async function activateApprovedOrder(orderId: string): Promise<void> {
+  const services = await db.service.findMany({
+    where: {
+      orderId,
+      status: "PENDING",
+      invoiceItems: { some: { invoice: { status: "PAID" } } },
+    },
+  });
+  const now = new Date();
+  for (const service of services) {
+    await db.service.update({
+      where: { id: service.id },
+      data: {
+        status: "ACTIVE",
+        expiresAt:
+          service.cycle === "ONE_TIME" ? null : addCycle(now, service.cycle),
+      },
+    });
+    await activateService(service.id);
+  }
 }
 
 // ── Recurring billing (called from the cron endpoint) ───────────────────────

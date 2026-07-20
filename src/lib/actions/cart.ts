@@ -8,6 +8,8 @@ import { getUser } from "@/lib/auth";
 import { clearCart, readCart, readCoupon, writeCart, writeCoupon } from "@/lib/cart";
 import { placeOrder, priceCart, validateCoupon } from "@/lib/services/orders";
 import { getActiveCurrency } from "@/lib/services/currency";
+import { headers } from "next/headers";
+import { getSetting } from "@/lib/settings";
 import { markInvoicePaid } from "@/lib/billing";
 import { audit } from "@/lib/audit";
 import type { FormState } from "@/lib/actions/auth";
@@ -51,7 +53,7 @@ export async function applyCoupon(
   return { success: `Coupon ${coupon.code} applied.` };
 }
 
-export async function checkout(): Promise<void> {
+export async function checkout(formData: FormData): Promise<void> {
   const user = await getUser();
   if (!user) redirect("/login");
 
@@ -59,9 +61,35 @@ export async function checkout(): Promise<void> {
   const lines = await priceCart(cart);
   if (lines.length === 0) redirect("/cart");
 
+  const hdrs = await headers();
+  const ip = hdrs.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
+
+  // checkout captcha (optional, Settings -> Security)
+  if ((await getSetting("turnstile_on_checkout")) === "true") {
+    const { verifyCaptcha } = await import("@/lib/services/fraud");
+    if (!(await verifyCaptcha(formData))) redirect("/cart?captcha=failed");
+  }
+
+  // fraud assessment: hard blocks bounce, risky orders go to the review queue
+  const { assessOrder, isTaxExempt } = await import("@/lib/services/fraud");
+  const verdict = await assessOrder(user, ip);
+  if (verdict.action === "block") {
+    await audit("order.blocked", {
+      userId: user.id,
+      metadata: { notes: verdict.notes },
+    });
+    redirect("/cart?blocked=1");
+  }
+
   const coupon = await readCoupon();
   const currency = await getActiveCurrency(user.currency);
-  const { order, invoice } = await placeOrder(user.id, lines, coupon, currency);
+  const { order, invoice } = await placeOrder(user.id, lines, coupon, currency, {
+    reviewStatus: verdict.action === "review" ? "PENDING_REVIEW" : "AUTO_APPROVED",
+    ip,
+    riskScore: verdict.score,
+    riskNotes: verdict.notes.join("; ") || null,
+    taxExempt: await isTaxExempt(user),
+  });
   // remember the customer's charge currency for future renewals
   if (user.currency !== currency.code) {
     await db.user.update({

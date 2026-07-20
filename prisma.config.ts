@@ -16,5 +16,6 @@ export default defineConfig({
     // CLI (migrate/db push) prefers the direct connection; the runtime
     // client uses the pooled DATABASE_URL via the pg driver adapter.
     url: process.env.DIRECT_URL ?? process.env.DATABASE_URL ?? "",
+    shadowDatabaseUrl: process.env.SHADOW_DATABASE_URL,
   },
 });

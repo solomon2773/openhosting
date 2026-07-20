@@ -5,6 +5,21 @@ import { stripeGateway } from "@/lib/extensions/gateways/stripe";
 import { paypalGateway } from "@/lib/extensions/gateways/paypal";
 import { mollieGateway } from "@/lib/extensions/gateways/mollie";
 import { bankTransferGateway } from "@/lib/extensions/gateways/bank-transfer";
+import { coinbaseCommerceGateway } from "@/lib/extensions/gateways/coinbase-commerce";
+import { nowpaymentsGateway } from "@/lib/extensions/gateways/nowpayments";
+import { btcpayGateway } from "@/lib/extensions/gateways/btcpay";
+import { coingateGateway } from "@/lib/extensions/gateways/coingate";
+import { goCardlessGateway } from "@/lib/extensions/gateways/gocardless";
+import { squareGateway } from "@/lib/extensions/gateways/square";
+import { authorizeNetGateway } from "@/lib/extensions/gateways/authorizenet";
+import { braintreeGateway } from "@/lib/extensions/gateways/braintree";
+import { lemonSqueezyGateway } from "@/lib/extensions/gateways/lemonsqueezy";
+import { razorpayGateway } from "@/lib/extensions/gateways/razorpay";
+import { mercadoPagoGateway } from "@/lib/extensions/gateways/mercadopago";
+import { paystackGateway } from "@/lib/extensions/gateways/paystack";
+import { flutterwaveGateway } from "@/lib/extensions/gateways/flutterwave";
+import { midtransGateway } from "@/lib/extensions/gateways/midtrans";
+import { xenditGateway } from "@/lib/extensions/gateways/xendit";
 import { pterodactylServer } from "@/lib/extensions/servers/pterodactyl";
 import { convoyServer } from "@/lib/extensions/servers/convoy";
 import { virtFusionServer } from "@/lib/extensions/servers/virtfusion";
@@ -15,12 +30,40 @@ import { pleskServer } from "@/lib/extensions/servers/plesk";
 import { enhanceServer } from "@/lib/extensions/servers/enhance";
 import { proxmoxServer } from "@/lib/extensions/servers/proxmox";
 import { webminServer } from "@/lib/extensions/servers/webmin";
+import { pelicanServer } from "@/lib/extensions/servers/pelican";
+import { wispServer } from "@/lib/extensions/servers/wisp";
+import { solusvmServer } from "@/lib/extensions/servers/solusvm";
+import { tcadminServer } from "@/lib/extensions/servers/tcadmin";
+import { hestiaCpServer } from "@/lib/extensions/servers/hestiacp";
+import { cyberPanelServer } from "@/lib/extensions/servers/cyberpanel";
+import { cwpServer } from "@/lib/extensions/servers/cwp";
+import { interworxServer } from "@/lib/extensions/servers/interworx";
+import { ispConfigServer } from "@/lib/extensions/servers/ispconfig";
+import { hetznerServer } from "@/lib/extensions/servers/hetzner";
+import { digitalOceanServer } from "@/lib/extensions/servers/digitalocean";
+import { vultrServer } from "@/lib/extensions/servers/vultr";
+import { linodeServer } from "@/lib/extensions/servers/linode";
 
 export const GATEWAY_DRIVERS: GatewayDriver[] = [
   stripeGateway,
   paypalGateway,
   mollieGateway,
   bankTransferGateway,
+  coinbaseCommerceGateway,
+  nowpaymentsGateway,
+  btcpayGateway,
+  coingateGateway,
+  goCardlessGateway,
+  squareGateway,
+  authorizeNetGateway,
+  braintreeGateway,
+  lemonSqueezyGateway,
+  razorpayGateway,
+  mercadoPagoGateway,
+  paystackGateway,
+  flutterwaveGateway,
+  midtransGateway,
+  xenditGateway,
 ];
 
 export const SERVER_DRIVERS: ServerDriver[] = [
@@ -34,6 +77,19 @@ export const SERVER_DRIVERS: ServerDriver[] = [
   enhanceServer,
   proxmoxServer,
   webminServer,
+  pelicanServer,
+  wispServer,
+  solusvmServer,
+  tcadminServer,
+  hestiaCpServer,
+  cyberPanelServer,
+  cwpServer,
+  interworxServer,
+  ispConfigServer,
+  hetznerServer,
+  digitalOceanServer,
+  vultrServer,
+  linodeServer,
 ];
 
 export function getGatewayDriver(slug: string): GatewayDriver | undefined {

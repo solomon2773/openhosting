@@ -172,6 +172,9 @@ const en = {
   "admin.nav.settings": "Settings",
   "admin.nav.auditLog": "Audit log",
   "admin.nav.clientArea": "Client area",
+  "admin.nav.fraud": "Fraud protection",
+  "admin.nav.affiliates": "Affiliates",
+  "dash.nav.affiliate": "Affiliate",
 } as const;
 
 export type MessageKey = keyof typeof en;
@@ -343,6 +346,9 @@ const nl: Record<MessageKey, string> = {
   "admin.nav.settings": "Instellingen",
   "admin.nav.auditLog": "Auditlog",
   "admin.nav.clientArea": "Klantomgeving",
+  "admin.nav.fraud": "Fraudebescherming",
+  "admin.nav.affiliates": "Affiliates",
+  "dash.nav.affiliate": "Affiliate",
 };
 
 const DICTIONARIES: Record<string, Record<MessageKey, string>> = { en, nl };

@@ -94,6 +94,7 @@ export async function computeTotals(
   couponCode: string | null,
   country: string | null,
   currency?: { code: string; rate: number },
+  taxExempt = false,
 ) {
   // All math happens in base currency, then converts once at the end.
   const rate = currency?.rate ?? 1;
@@ -120,7 +121,7 @@ export async function computeTotals(
 
   let tax = 0;
   const settings = await getSettings(["tax_enabled", "currency"]);
-  if (settings.tax_enabled === "true") {
+  if (settings.tax_enabled === "true" && !taxExempt) {
     const rates = await db.taxRate.findMany();
     const taxRate =
       rates.find((r) => r.country && r.country === country) ??
@@ -142,11 +143,20 @@ export async function computeTotals(
 }
 
 // Creates the order with its invoice and pending services in one transaction.
+export type OrderGuard = {
+  reviewStatus?: "AUTO_APPROVED" | "PENDING_REVIEW";
+  ip?: string | null;
+  riskScore?: number | null;
+  riskNotes?: string | null;
+  taxExempt?: boolean;
+};
+
 export async function placeOrder(
   userId: string,
   lines: PricedLine[],
   couponCode: string | null,
   currency?: { code: string; rate: number },
+  guard: OrderGuard = {},
 ) {
   if (lines.length === 0) throw new Error("Cart is empty");
   const user = await db.user.findUnique({ where: { id: userId } });
@@ -155,6 +165,7 @@ export async function placeOrder(
     couponCode,
     user?.country ?? null,
     currency,
+    guard.taxExempt ?? false,
   );
   const rate = totals.rate;
 
@@ -162,6 +173,10 @@ export async function placeOrder(
     const order = await tx.order.create({
       data: {
         userId,
+        reviewStatus: guard.reviewStatus ?? "AUTO_APPROVED",
+        ip: guard.ip ?? null,
+        riskScore: guard.riskScore ?? null,
+        riskNotes: guard.riskNotes ?? null,
         currency: totals.currency,
         subtotal: totals.subtotal,
         discount: totals.discount,

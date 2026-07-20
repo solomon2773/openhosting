@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formatDateTime, formatMoney, CYCLE_LABELS } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
+import { approveOrder, rejectOrder } from "@/lib/actions/fraud-affiliates";
 
 export default async function AdminOrderDetailPage({
   params,
@@ -39,7 +40,27 @@ export default async function AdminOrderDetailPage({
             </Link>
           </p>
         </div>
-        <StatusBadge status={order.status} />
+        <div className="flex items-center gap-3">
+          {order.reviewStatus === "PENDING_REVIEW" && (
+            <>
+              <span className="badge bg-amber-100 text-amber-700">
+                fraud review · score {order.riskScore ?? "—"}
+              </span>
+              <form action={approveOrder}>
+                <input type="hidden" name="id" value={order.id} />
+                <button type="submit" className="btn-primary">Approve</button>
+              </form>
+              <form action={rejectOrder}>
+                <input type="hidden" name="id" value={order.id} />
+                <button type="submit" className="btn-danger">Reject</button>
+              </form>
+            </>
+          )}
+          {order.reviewStatus === "REJECTED" && (
+            <span className="badge bg-red-100 text-red-700">rejected (fraud)</span>
+          )}
+          <StatusBadge status={order.status} />
+        </div>
       </div>
 
       <div className="card mt-6">

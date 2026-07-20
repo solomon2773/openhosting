@@ -51,6 +51,40 @@ const SECTIONS: Array<{
         help: "Blank disables the registration captcha.",
       },
       { key: "turnstile_secret", label: "Turnstile secret key", type: "password" },
+      { key: "turnstile_on_checkout", label: "Captcha on checkout", type: "checkbox" },
+    ],
+  },
+  {
+    heading: "Fraud",
+    fields: [
+      { key: "fraud_review_all", label: "Manually review every order", type: "checkbox" },
+      { key: "fraud_block_disposable", label: "Block disposable email domains", type: "checkbox" },
+      { key: "fraud_require_verified_email", label: "Require verified email before ordering", type: "checkbox" },
+      { key: "fraud_velocity_max", label: "Max orders per IP per hour (0 = off)", type: "number" },
+      { key: "fraud_risk_threshold", label: "Risk score review threshold (0-99)", type: "number" },
+      { key: "maxmind_account_id", label: "MaxMind minFraud account ID" },
+      { key: "maxmind_license_key", label: "MaxMind license key", type: "password" },
+      { key: "fraudlabs_api_key", label: "FraudLabs Pro API key", type: "password" },
+      { key: "vat_reverse_charge", label: "EU VAT reverse charge (VIES-validated B2B)", type: "checkbox" },
+      { key: "company_country", label: "Your company country (ISO)", help: "Domestic B2B sales are never reverse-charged." },
+    ],
+  },
+  {
+    heading: "Affiliate program",
+    fields: [
+      { key: "affiliate_enabled", label: "Enable affiliate program", type: "checkbox" },
+      {
+        key: "affiliate_commission_type",
+        label: "Default commission type",
+        type: "select",
+        options: [
+          { value: "PERCENT", label: "Percent of invoice" },
+          { value: "FIXED", label: "Fixed amount" },
+        ],
+      },
+      { key: "affiliate_commission_value", label: "Default commission value", type: "number" },
+      { key: "affiliate_recurring", label: "Recurring commissions (every invoice, not just the first)", type: "checkbox" },
+      { key: "affiliate_payout_threshold", label: "Payout threshold", type: "number" },
     ],
   },
   {
