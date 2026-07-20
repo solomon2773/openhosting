@@ -55,6 +55,9 @@ export default async function StoreLayout({
             <Link href="/blog" className="hover:text-slate-900">
               {t("nav.blog")}
             </Link>
+            <Link href="/kb" className="hover:text-slate-900">
+              Knowledgebase
+            </Link>
           </nav>
           <div className="flex items-center gap-3">
             <LocalePicker locales={LOCALES} active={locale} />

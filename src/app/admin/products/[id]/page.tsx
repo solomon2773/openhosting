@@ -158,6 +158,57 @@ export default async function AdminProductEditPage({
           </div>
 
           <h2 className="border-t border-slate-200 pt-4 font-semibold">
+            Usage-metered billing
+          </h2>
+          <p className="-mt-2 text-sm text-slate-500">
+            Optionally charge for metered usage on top of the recurring price.
+            Push usage via the API; it's added to each renewal invoice.
+          </p>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="flex items-center gap-2 pt-6">
+              <input
+                id="metered"
+                name="metered"
+                type="checkbox"
+                defaultChecked={product?.metered}
+              />
+              <label htmlFor="metered" className="text-sm">
+                Metered
+              </label>
+            </div>
+            <div>
+              <label className="label" htmlFor="meteredUnit">
+                Unit name
+              </label>
+              <input
+                id="meteredUnit"
+                name="meteredUnit"
+                placeholder="GB, requests…"
+                defaultValue={product?.meteredUnit ?? ""}
+                className="input"
+              />
+            </div>
+            <div>
+              <label className="label" htmlFor="meteredUnitPrice">
+                Price per unit
+              </label>
+              <input
+                id="meteredUnitPrice"
+                name="meteredUnitPrice"
+                type="number"
+                step="0.0001"
+                min="0"
+                defaultValue={
+                  product?.meteredUnitPrice != null
+                    ? Number(product.meteredUnitPrice)
+                    : ""
+                }
+                className="input"
+              />
+            </div>
+          </div>
+
+          <h2 className="border-t border-slate-200 pt-4 font-semibold">
             Pricing
           </h2>
           <p className="-mt-2 text-sm text-slate-500">

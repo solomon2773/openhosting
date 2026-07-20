@@ -15,6 +15,7 @@ const NAV: Array<{ heading: MessageKey; items: { href: string; label: MessageKey
     items: [
       { href: "/admin/orders", label: "admin.nav.orders" },
       { href: "/admin/invoices", label: "admin.nav.invoices" },
+      { href: "/admin/quotes", label: "admin.nav.quotes" },
       { href: "/admin/services", label: "admin.nav.services" },
       { href: "/admin/coupons", label: "admin.nav.coupons" },
       { href: "/admin/taxes", label: "admin.nav.taxes" },
@@ -41,10 +42,12 @@ const NAV: Array<{ heading: MessageKey; items: { href: string; label: MessageKey
     items: [
       { href: "/admin/fraud", label: "admin.nav.fraud" },
       { href: "/admin/announcements", label: "admin.nav.announcements" },
+      { href: "/admin/knowledgebase", label: "admin.nav.knowledgebase" },
       { href: "/admin/extensions", label: "admin.nav.extensions" },
       { href: "/admin/api-keys", label: "admin.nav.apiKeys" },
       { href: "/admin/oauth-clients", label: "admin.nav.oauthClients" },
       { href: "/admin/email-templates", label: "admin.nav.emailTemplates" },
+      { href: "/admin/mass-mail", label: "admin.nav.massMail" },
       { href: "/admin/settings", label: "admin.nav.settings" },
       { href: "/admin/audit-log", label: "admin.nav.auditLog" },
     ],

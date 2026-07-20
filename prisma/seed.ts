@@ -462,6 +462,35 @@ async function main() {
     });
   }
 
+  // ── Knowledgebase ─────────────────────────────────────────────────────────
+  const kbCat = await db.kbCategory.upsert({
+    where: { slug: "getting-started" },
+    update: {},
+    create: { name: "Getting started", slug: "getting-started", sortOrder: 1 },
+  });
+  await db.kbArticle.upsert({
+    where: { slug: "how-to-order" },
+    update: {},
+    create: {
+      categoryId: kbCat.id,
+      title: "How to place your first order",
+      slug: "how-to-order",
+      body: "Browse the store, pick a plan and billing cycle, add it to your cart, and check out. Your service activates as soon as the invoice is paid.",
+      published: true,
+    },
+  });
+  await db.kbArticle.upsert({
+    where: { slug: "reset-password" },
+    update: {},
+    create: {
+      categoryId: kbCat.id,
+      title: "Resetting your password",
+      slug: "reset-password",
+      body: "Use the 'Forgot password?' link on the sign-in page. We'll email you a reset link that is valid for 60 minutes.",
+      published: true,
+    },
+  });
+
   console.log("Seed complete.");
   console.log("  Admin: admin@example.com / " + adminPassword);
   console.log("  Demo customer: demo@example.com / demo12345");

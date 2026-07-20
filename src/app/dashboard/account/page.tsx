@@ -40,6 +40,15 @@ export default async function AccountPage() {
     <div className="max-w-3xl space-y-8">
       <h1 className="text-2xl font-bold">{t("account.title")}</h1>
 
+      <div className="flex flex-wrap gap-3">
+        <a href="/dashboard/account/contacts" className="btn-secondary">
+          Contacts &amp; sub-accounts
+        </a>
+        <a href="/dashboard/account/billing" className="btn-secondary">
+          Billing methods
+        </a>
+      </div>
+
       <div className="card p-6">
         <h2 className="mb-4 font-semibold">{t("account.profile")}</h2>
         <ActionForm action={updateProfile}>

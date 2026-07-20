@@ -23,8 +23,21 @@ no scopes selected has full access (`*`). Each key records its last-used time.
 | GET | `/api/v1/users` | `users:read` | List users (paginated) |
 | GET | `/api/v1/users/:id` | `users:read` | A user with services + counts |
 | GET | `/api/v1/products` | `products:read` | Catalog with all prices |
+| POST | `/api/v1/users` | `users:write` | Create a customer |
+| GET | `/api/v1/services` | `services:read` | List services (filter `?status=`, `?user_id=`) |
+| GET | `/api/v1/services/:id` | `services:read` | A service + unbilled usage |
+| POST | `/api/v1/services/:id` | `services:write` | Suspend / unsuspend / terminate |
+| POST | `/api/v1/services/:id/usage` | `usage:write` | Push a metered usage record |
+| GET | `/api/v1/categories` | `products:read` | Product categories |
 | GET | `/api/v1/orders` | `orders:read` | Orders with line items |
-| GET | `/api/v1/invoices` | `invoices:read` | Invoices (filter `?status=PENDING`) |
+| GET | `/api/v1/invoices` | `invoices:read` | Invoices (filter `?status=`) |
+| GET | `/api/v1/invoices/:id` | `invoices:read` | An invoice + items + payments |
+| POST | `/api/v1/invoices/:id` | `invoices:write` | Mark an invoice paid |
+| GET | `/api/v1/coupons` | `coupons:read` | List coupons |
+| POST | `/api/v1/coupons` | `coupons:write` | Create a coupon |
+| GET | `/api/v1/quotes` | `quotes:read` | List quotes |
+| POST | `/api/v1/quotes` | `quotes:write` | Create a quote |
+| GET | `/api/v1/knowledgebase` | `knowledgebase:read` | Published articles (filter `?q=`) |
 | GET | `/api/v1/tickets` | `tickets:read` | Tickets |
 | POST | `/api/v1/tickets` | `tickets:write` | Open a ticket for a user |
 

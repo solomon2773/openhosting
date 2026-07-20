@@ -197,11 +197,41 @@ export async function generateRenewalInvoices(): Promise<number> {
     include: { user: true, product: true },
   });
 
+  const { consumeUnbilledUsage } = await import("@/lib/services/usage");
   let created = 0;
   for (const service of services) {
-    const total = Number(service.price) * service.quantity;
+    const base = Number(service.price) * service.quantity;
     // services are priced in the currency locked at order time
     const currency = service.currency ?? settings.currency;
+    const items: {
+      description: string;
+      quantity: number;
+      unitPrice: number;
+      serviceId?: string;
+    }[] = [
+      {
+        description: `${service.product.name} — renewal until ${formatDate(
+          service.expiresAt
+            ? addCycle(service.expiresAt, service.cycle)
+            : null,
+        )}`,
+        quantity: service.quantity,
+        unitPrice: Number(service.price),
+        serviceId: service.id,
+      },
+    ];
+    // metered usage accrued this period is added as a line item
+    const usage = await consumeUnbilledUsage(service.id);
+    let total = base;
+    if (usage && usage.amount > 0) {
+      items.push({
+        description: `${service.product.name} — usage: ${usage.quantity}${usage.unit ? " " + usage.unit : ""}`,
+        quantity: 1,
+        unitPrice: usage.amount,
+        serviceId: service.id,
+      });
+      total += usage.amount;
+    }
     const invoice = await db.invoice.create({
       data: {
         userId: service.userId,
@@ -209,18 +239,7 @@ export async function generateRenewalInvoices(): Promise<number> {
         subtotal: total,
         total,
         dueAt: service.expiresAt,
-        items: {
-          create: {
-            description: `${service.product.name} — renewal until ${formatDate(
-              service.expiresAt
-                ? addCycle(service.expiresAt, service.cycle)
-                : null,
-            )}`,
-            quantity: service.quantity,
-            unitPrice: service.price,
-            serviceId: service.id,
-          },
-        },
+        items: { create: items },
       },
     });
     created++;

@@ -27,10 +27,15 @@ then follow [Installation](getting-started/installation.md).
 - [Coupons & taxes](guides/coupons-taxes.md) — discounts and tax rates
 - [Currencies](guides/currencies.md) — multi-currency pricing
 - [Support tickets](guides/tickets.md) — departments, priorities, attachments
+- [Knowledgebase](guides/knowledgebase.md) — self-service help articles
 - [Notifications](guides/notifications.md) — in-app + email, per-user preferences
 - [Affiliate program](guides/affiliates.md) — referrals and commissions
 - [Fraud protection](guides/fraud.md) — review queue, ban lists, risk scoring, VAT
 - [Accounts & security](guides/accounts-security.md) — 2FA, roles, verification
+- [Quotes & estimates](guides/quotes.md) — priced proposals customers accept online
+- [Contacts & sub-accounts](guides/contacts.md) — scoped additional contacts
+- [Usage-metered billing](guides/metered-billing.md) — bill by consumption
+- [Mass mail](guides/mass-mail.md) — bulk email to segments
 - [Announcements](guides/announcements.md) — the news/blog module
 - [Themes](guides/themes.md) — built-in themes and custom ones
 - [Localization (i18n)](guides/i18n.md) — languages and translations

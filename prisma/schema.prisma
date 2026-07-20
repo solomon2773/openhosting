@@ -53,6 +53,63 @@ model User {
   notifications   Notification[]
   notificationPreferences NotificationPreference[]
   affiliate       Affiliate?
+  contacts        Contact[]
+  quotes          Quote[]
+}
+
+// A sub-account / additional contact under a customer's account. May have its
+// own login and a scoped set of permissions on the parent account.
+model Contact {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName   String
+  lastName    String
+  email       String   @unique
+  password    String? // set = can log in as a sub-account
+  // scoped access: any of ["invoices","tickets","services","manage"]
+  permissions Json     @default("[]")
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+// A pre-sale quote / estimate. Accepting it generates an invoice.
+model Quote {
+  id         String      @id @default(cuid())
+  number     Int         @unique @default(autoincrement())
+  userId     String
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status     QuoteStatus @default(DRAFT)
+  currency   String      @default("USD")
+  subtotal   Decimal     @default(0) @db.Decimal(12, 2)
+  tax        Decimal     @default(0) @db.Decimal(12, 2)
+  total      Decimal     @default(0) @db.Decimal(12, 2)
+  notes      String?
+  validUntil DateTime?
+  invoiceId  String? // set once accepted and converted
+  items      QuoteItem[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@index([userId])
+}
+
+model QuoteItem {
+  id          String  @id @default(cuid())
+  quoteId     String
+  quote       Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Int     @default(1)
+  unitPrice   Decimal @db.Decimal(12, 2)
 }
 
 model Notification {
@@ -175,6 +232,10 @@ model Product {
   resaleExtensionId String?
   resaleExtension   Extension? @relation("ProductResaleExtension", fields: [resaleExtensionId], references: [id], onDelete: SetNull)
   resaleConfig      Json?
+  // Usage-metered billing: metered usage is added to each renewal invoice.
+  metered          Boolean  @default(false)
+  meteredUnit      String? // e.g. "GB", "requests"
+  meteredUnitPrice Decimal? @db.Decimal(12, 4)
 
   prices        ProductPrice[]
   configOptions ConfigOption[]
@@ -331,9 +392,23 @@ model Service {
   updatedAt   DateTime  @updatedAt
 
   invoiceItems InvoiceItem[]
+  usageRecords UsageRecord[]
 
   @@index([userId])
   @@index([status, expiresAt])
+}
+
+// A metered usage data point recorded against a service (pushed via the API).
+model UsageRecord {
+  id          String   @id @default(cuid())
+  serviceId   String
+  service     Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  quantity    Decimal  @db.Decimal(14, 4)
+  description String?
+  billed      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([serviceId, billed])
 }
 
 // ── Billing ─────────────────────────────────────────────────────────────────
@@ -642,6 +717,43 @@ model OauthToken {
   userId    String
   expiresAt DateTime
   createdAt DateTime    @default(now())
+}
+
+// ── Knowledgebase ───────────────────────────────────────────────────────────
+
+model KbCategory {
+  id          String      @id @default(cuid())
+  name        String
+  slug        String      @unique
+  description String?
+  sortOrder   Int         @default(0)
+  articles    KbArticle[]
+  createdAt   DateTime    @default(now())
+}
+
+model KbArticle {
+  id          String      @id @default(cuid())
+  categoryId  String?
+  category    KbCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  title       String
+  slug        String      @unique
+  body        String
+  published   Boolean     @default(false)
+  views       Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([published])
+}
+
+// A bulk-email campaign sent to a customer segment.
+model MassMail {
+  id        String   @id @default(cuid())
+  subject   String
+  body      String
+  audience  String // all | active_service | no_service
+  sentCount Int      @default(0)
+  createdAt DateTime @default(now())
 }
 
 // News/blog posts shown on the public storefront.

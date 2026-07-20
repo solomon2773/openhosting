@@ -111,6 +111,12 @@ export async function saveProduct(
     stock: stockRaw === "" ? null : Number(stockRaw),
     hidden: formData.get("hidden") === "on",
     allowQuantity: formData.get("allowQuantity") === "on",
+    metered: formData.get("metered") === "on",
+    meteredUnit: str(formData, "meteredUnit") || null,
+    meteredUnitPrice:
+      str(formData, "meteredUnitPrice") === ""
+        ? null
+        : Number(str(formData, "meteredUnitPrice")),
     sortOrder: Number(formData.get("sortOrder") ?? 0),
     serverExtensionId,
     ...(serverConfig !== undefined ? { serverConfig } : {}),

@@ -10,6 +10,7 @@ const NAV: Array<{ href: string; label: MessageKey }> = [
   { href: "/dashboard", label: "dash.nav.dashboard" },
   { href: "/dashboard/services", label: "dash.nav.services" },
   { href: "/dashboard/invoices", label: "dash.nav.invoices" },
+  { href: "/dashboard/quotes", label: "dash.nav.quotes" },
   { href: "/dashboard/tickets", label: "dash.nav.support" },
   { href: "/dashboard/account/billing", label: "dash.nav.billing" },
   { href: "/dashboard/affiliate", label: "dash.nav.affiliate" },

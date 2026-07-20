@@ -8,9 +8,19 @@ export const metadata = { title: "API keys" };
 
 const PERMISSIONS = [
   "users:read",
+  "users:write",
   "products:read",
   "orders:read",
   "invoices:read",
+  "invoices:write",
+  "services:read",
+  "services:write",
+  "usage:write",
+  "coupons:read",
+  "coupons:write",
+  "quotes:read",
+  "quotes:write",
+  "knowledgebase:read",
   "tickets:read",
   "tickets:write",
 ];
