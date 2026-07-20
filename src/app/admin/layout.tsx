@@ -4,6 +4,7 @@ import { getSetting } from "@/lib/settings";
 import { logout } from "@/lib/actions/auth";
 import { syncExtensions } from "@/lib/extensions/registry";
 import { getT, type MessageKey } from "@/lib/i18n";
+import { LogoMark } from "@/components/logo";
 
 const NAV: Array<{ heading: MessageKey; items: { href: string; label: MessageKey }[] }> = [
   {
@@ -71,9 +72,7 @@ export default async function AdminLayout({
     <div className="flex min-h-screen">
       <aside className="hidden w-60 shrink-0 flex-col border-r border-slate-200 bg-slate-900 text-slate-300 md:flex">
         <Link href="/admin" className="flex items-center gap-2 px-5 py-5">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-sm font-bold text-white">
-            {companyName.charAt(0)}
-          </span>
+<LogoMark size={28} tone="dark" />
           <span className="font-semibold text-white">Admin</span>
         </Link>
         <nav className="flex-1 space-y-5 overflow-y-auto px-3 pb-4">

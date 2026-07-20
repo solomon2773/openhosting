@@ -5,6 +5,7 @@ import { logout } from "@/lib/actions/auth";
 import { formatMoney } from "@/lib/format";
 import { unreadCount } from "@/lib/services/notifications";
 import { getT, type MessageKey } from "@/lib/i18n";
+import { LogoMark } from "@/components/logo";
 
 const NAV: Array<{ href: string; label: MessageKey }> = [
   { href: "/dashboard", label: "dash.nav.dashboard" },
@@ -34,9 +35,7 @@ export default async function DashboardLayout({
     <div className="flex min-h-screen">
       <aside className="hidden w-64 shrink-0 flex-col border-r border-slate-200 bg-white md:flex">
         <Link href="/" className="flex items-center gap-2 px-6 py-5">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white">
-            {companyName.charAt(0)}
-          </span>
+<LogoMark size={28} />
           <span className="font-semibold">{companyName}</span>
         </Link>
         <nav className="flex-1 space-y-1 px-3 py-2">

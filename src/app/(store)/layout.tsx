@@ -10,6 +10,7 @@ import {
 import { CurrencyPicker } from "@/components/currency-picker";
 import { getLocale, getT, LOCALES } from "@/lib/i18n";
 import { LocalePicker } from "@/components/locale-picker";
+import { LogoMark } from "@/components/logo";
 
 export default async function StoreLayout({
   children,
@@ -37,9 +38,7 @@ export default async function StoreLayout({
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-6 px-4">
           <Link href="/" className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white">
-              {companyName.charAt(0)}
-            </span>
+<LogoMark size={28} />
             <span className="font-semibold">{companyName}</span>
           </Link>
           <nav className="hidden items-center gap-6 text-sm text-slate-600 md:flex">
