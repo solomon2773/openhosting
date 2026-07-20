@@ -1,4 +1,4 @@
-# Using Supabase as the database
+# Using Supabase
 
 OpenHosting works with any PostgreSQL, including Supabase's managed Postgres.
 
@@ -21,11 +21,18 @@ npm run db:migrate   # applies prisma/migrations via DIRECT_URL
 npm run db:seed
 ```
 
-Prisma routes normal queries through the pooler (`DATABASE_URL`) — required
-for serverless/edge-friendly connection counts — and uses `DIRECT_URL` only
-for migrations, which PgBouncer's transaction mode can't run.
+## Why two URLs
 
-That's it: deploy the app container anywhere (Docker, k8s, Vercel) with those
-two variables and Supabase handles backups, PITR and scaling for the data
-layer. The app keeps its own `users` table and session auth, so no Supabase
-Auth configuration is needed.
+At runtime the app talks to Postgres through the Prisma **pg driver adapter**
+using `DATABASE_URL` — point this at the pooled connection so serverless and
+autoscaled deployments don't exhaust connections. Migrations need a direct
+connection (PgBouncer's transaction mode can't run them), so the CLI uses
+`DIRECT_URL`.
+
+## Notes
+
+- OpenHosting keeps its own `users` table and session-based auth, so **no
+  Supabase Auth configuration is needed** — Supabase is only the data layer.
+- Supabase handles backups, point-in-time recovery and scaling for you.
+- Deploy the app container anywhere ([Docker](docker.md), [Kubernetes](kubernetes.md),
+  a PaaS) with those two variables set.

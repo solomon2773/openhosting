@@ -130,18 +130,19 @@ npm run db:push && npm run db:seed
 npm run dev
 ```
 
-## ☁️ Deployment
+## 📚 Documentation
 
-| Target | Guide |
-|---|---|
-| Docker / any VPS | [docs/deploy-docker.md](docs/deploy-docker.md) |
-| Kubernetes (any cloud) | [docs/deploy-kubernetes.md](docs/deploy-kubernetes.md) |
-| Supabase database | [docs/supabase.md](docs/supabase.md) |
-| Configuration reference | [docs/configuration.md](docs/configuration.md) |
-| REST API | [docs/api.md](docs/api.md) |
-| Writing extensions | [docs/extensions.md](docs/extensions.md) |
-| Themes | [docs/themes.md](docs/themes.md) |
-| Migrating from another panel | [docs/migrations.md](docs/migrations.md) |
+Full documentation lives in **[docs/](docs/README.md)** — start with the
+[Introduction](docs/getting-started/introduction.md). Highlights:
+
+| | | |
+|---|---|---|
+| [Installation](docs/getting-started/installation.md) | [Docker](docs/getting-started/docker.md) | [Kubernetes](docs/getting-started/kubernetes.md) |
+| [Configuration](docs/getting-started/configuration.md) | [Products](docs/guides/products.md) | [Billing automation](docs/billing/automation.md) |
+| [Payment gateways](docs/extensions/payment-gateways.md) | [Server modules](docs/extensions/server-modules.md) | [Resale modules](docs/extensions/resale-modules.md) |
+| [Fraud protection](docs/guides/fraud.md) | [Affiliates](docs/guides/affiliates.md) | [Tickets](docs/guides/tickets.md) |
+| [REST API](docs/api/rest-api.md) | [OAuth / SSO](docs/api/oauth.md) | [Writing extensions](docs/extensions/writing-extensions.md) |
+| [Themes](docs/guides/themes.md) | [Migrations](docs/migrations.md) | [FAQ](docs/faq.md) |
 
 ## 🏗 Architecture
 
