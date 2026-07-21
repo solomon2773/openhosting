@@ -5,6 +5,15 @@ any new database migrations, and restart.
 
 ## Docker / docker-compose
 
+If you used the one-line installer, just re-run it — it pulls the new code,
+rebuilds and restarts while keeping your `.env` and data:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/solomon2773/openhosting/main/install.sh | bash
+```
+
+Or manually:
+
 ```bash
 cd openhosting
 git pull

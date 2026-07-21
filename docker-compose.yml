@@ -25,7 +25,7 @@ services:
       DIRECT_URL: postgresql://openhosting:${DB_PASSWORD:-openhosting}@db:5432/openhosting
       CRON_SECRET: ${CRON_SECRET:-change-me}
     ports:
-      - "3000:3000"
+      - "${APP_PORT:-3000}:3000"
 
   # Hits the billing endpoint hourly (renewal invoices, suspensions).
   cron:

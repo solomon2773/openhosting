@@ -14,6 +14,10 @@ COPY . .
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
 ENV DIRECT_URL="postgresql://build:build@localhost:5432/build"
 RUN npx prisma generate && npm run build
+# Bundle the seed so it runs with plain node inside the runtime image
+# (`docker compose exec app node prisma/seed.mjs`) — no Node needed on the host.
+RUN npx esbuild prisma/seed.ts --bundle --platform=node --format=esm \
+      --packages=external --outfile=prisma/seed.mjs
 
 # ── prisma CLI (isolated, for migrate deploy at runtime) ────────────────────
 FROM node:24-alpine AS prisma-cli

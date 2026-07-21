@@ -102,24 +102,33 @@ dependency. No license fees, no legacy stack.
 
 </details>
 
-## 🚀 Quick start (Docker)
+## 🚀 Quick start
+
+One command on a fresh Linux server — it installs Docker if needed, generates
+secrets, starts the stack and seeds the first admin account:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/solomon2773/openhosting/main/install.sh | bash
+```
+
+Open `http://your-server:3000` and sign in with the admin credentials the
+script prints. Re-run the same command any time to update.
+
+<details>
+<summary>Manual Docker setup</summary>
 
 ```bash
 git clone https://github.com/solomon2773/openhosting.git
 cd openhosting
+export DB_PASSWORD="$(openssl rand -hex 16)" CRON_SECRET="$(openssl rand -hex 32)"
 docker compose up -d --build
+docker compose exec -e SEED_ADMIN_PASSWORD="a-strong-password" app node prisma/seed.mjs
 ```
 
-Then seed the admin account and demo data (from the repo, requires Node):
+Open <http://localhost:3000> — admin login `admin@example.com` with the
+password you chose. See the [Docker guide](docs/getting-started/docker.md).
 
-```bash
-npm install
-DATABASE_URL="postgresql://openhosting:openhosting@localhost:5432/openhosting" \
-  npm run db:seed
-```
-
-Open <http://localhost:3000> — admin login `admin@example.com` / `admin12345`
-(change it immediately).
+</details>
 
 ### Local development
 

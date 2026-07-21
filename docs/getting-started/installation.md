@@ -1,7 +1,9 @@
 # Installation (local development)
 
-This guide gets OpenHosting running on your machine for development. For
-production, see [Docker](docker.md) or [Kubernetes](kubernetes.md).
+This guide gets OpenHosting running on your machine for development. For a
+production server, use the [one-line installer](docker.md#one-line-install-recommended)
+(`curl -fsSL https://raw.githubusercontent.com/solomon2773/openhosting/main/install.sh | bash`)
+or see [Docker](docker.md) / [Kubernetes](kubernetes.md).
 
 ## Requirements
 

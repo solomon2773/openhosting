@@ -8,3 +8,4 @@ docs
 deploy
 *.md
 .github
+install.sh

@@ -11,7 +11,7 @@ then follow [Installation](getting-started/installation.md).
 
 - [Introduction](getting-started/introduction.md) — what OpenHosting is and how it fits together
 - [Installation](getting-started/installation.md) — local development setup
-- [Deploy with Docker](getting-started/docker.md) — compose stack for a single host
+- [Deploy with Docker](getting-started/docker.md) — one-line install script and compose stack for a single host
 - [Deploy on Kubernetes](getting-started/kubernetes.md) — manifests for any cluster
 - [Using Supabase](getting-started/supabase.md) — managed Postgres
 - [Reverse proxy & SSL](getting-started/reverse-proxy-ssl.md) — TLS termination
