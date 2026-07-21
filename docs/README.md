@@ -60,6 +60,7 @@ then follow [Installation](getting-started/installation.md).
 - [CLI](cli.md) — the `oh` command-line tool
 - [MCP server](mcp.md) — AI-assistant tools for managing OpenHosting
 - [FAQ](faq.md) — common questions
+- [Roadmap](roadmap.md) — where OpenHosting is headed in the AI era
 - [Contributing](contributing.md) — help improve OpenHosting
 
 ---

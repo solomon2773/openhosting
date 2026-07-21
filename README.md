@@ -143,7 +143,7 @@ Full documentation lives in **[docs/](docs/README.md)** — start with the
 | [Fraud protection](docs/guides/fraud.md) | [Affiliates](docs/guides/affiliates.md) | [Tickets](docs/guides/tickets.md) |
 | [REST API](docs/api/rest-api.md) | [OAuth / SSO](docs/api/oauth.md) | [Writing extensions](docs/extensions/writing-extensions.md) |
 | [Themes](docs/guides/themes.md) | [Migrations](docs/migrations.md) | [FAQ](docs/faq.md) |
-| [CLI](docs/cli.md) | [MCP server](docs/mcp.md) | |
+| [CLI](docs/cli.md) | [MCP server](docs/mcp.md) | [Roadmap](docs/roadmap.md) |
 
 ## 🏗 Architecture
 
