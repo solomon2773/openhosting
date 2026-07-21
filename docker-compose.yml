@@ -7,7 +7,9 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-openhosting}
       POSTGRES_DB: openhosting
     volumes:
-      - db-data:/var/lib/postgresql/data
+      # postgres 18+ images store data under /var/lib/postgresql/<major>/ —
+      # the volume must mount the parent, not the old …/data path.
+      - db-data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U openhosting"]
       interval: 5s
