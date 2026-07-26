@@ -62,7 +62,7 @@ and asks what to do:
 
 ```
 ==> OpenHosting is already installed in /opt/openhosting
-    version 0.4.0 · port 3000 · billing.example.com (HTTPS)
+    version 0.5.0 · port 3000 · billing.example.com (HTTPS)
 
    1) Upgrade to the latest version      keeps all data
    2) Rebuild the containers             keeps all data
