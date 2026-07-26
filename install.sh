@@ -163,7 +163,8 @@ fi
 DOMAIN="${OH_DOMAIN:-}"
 ADMIN_EMAIL="${OH_ADMIN_EMAIL:-}"
 ADMIN_PASSWORD="${OH_ADMIN_PASSWORD:-}"
-APP_PORT=""            # the port this install publishes, resolved below
+APP_PORT=""            # the port number this install publishes, resolved below
+APP_BIND=""            # optional "127.0.0.1:" prefix kept from APP_PORT in .env
 CURRENT_PORT=""        # the port it published before this run
 # What the closing summary says about the admin password. Only a password the
 # installer generated is ever printed back.
@@ -415,6 +416,26 @@ choose_port() { # resolve APP_PORT from <wanted port>
 
 # ── .env ────────────────────────────────────────────────────────────────────
 
+# APP_PORT may carry a bind address ("127.0.0.1:3000" publishes to localhost
+# only, the usual hardening behind a reverse proxy). Everything here works with
+# the port number; the prefix is remembered and written back untouched.
+parse_port_spec() {
+  case "$1" in
+    *:*) APP_BIND="${1%:*}:"; APP_PORT="${1##*:}" ;;
+    *)   APP_BIND="";         APP_PORT="$1" ;;
+  esac
+}
+
+port_spec() { printf '%s%s' "$APP_BIND" "$APP_PORT"; }
+
+# Localhost-bound installs are only reachable through the proxy in front.
+port_is_local_only() {
+  case "$APP_BIND" in
+    127.0.0.1:|localhost:|::1:|"[::1]":) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 env_get() { sed -n "s/^$1=//p" "$OH_DIR/.env" 2>/dev/null | head -n1; }
 
 env_set() { # env_set <key> <value> — creates or replaces the line, keeps perms
@@ -440,7 +461,7 @@ write_fresh_env() {
 # database volume exists.
 DB_PASSWORD=$(gen_hex 16)
 CRON_SECRET=$(gen_hex 32)
-APP_PORT=$APP_PORT
+APP_PORT=$(port_spec)
 # Address of the first admin account, used by the seed only.
 SEED_ADMIN_EMAIL=$ADMIN_EMAIL
 EOF
@@ -575,8 +596,30 @@ apply_password() { # apply_password <email> <password> — returns the tool's st
 
 # ── nginx + HTTPS ───────────────────────────────────────────────────────────
 
+# A vhost that already proxies to this install, whatever it is called. Sites
+# written by hand (or by an older installer) are then updated in place instead
+# of being shadowed by a second server block.
+nginx_site_for_app() {
+  local dir f
+  [ -n "$APP_PORT" ] || return 1
+  for dir in /etc/nginx/sites-enabled /etc/nginx/conf.d /etc/nginx/sites-available; do
+    [ -d "$dir" ] || continue
+    for f in "$dir"/*; do
+      [ -e "$f" ] || continue
+      if $SUDO grep -qsE "proxy_pass +http://(127\.0\.0\.1|localhost):$APP_PORT;" "$f"; then
+        readlink -f "$f" 2>/dev/null || printf '%s' "$f"
+        return 0
+      fi
+    done
+  done
+  return 1
+}
+
 nginx_conf_path() {
-  if [ -d /etc/nginx/sites-available ]; then
+  local existing
+  if existing="$(nginx_site_for_app)" && [ -n "$existing" ]; then
+    printf '%s' "$existing"
+  elif [ -d /etc/nginx/sites-available ]; then
     printf '/etc/nginx/sites-available/openhosting.conf'
   else
     printf '/etc/nginx/conf.d/openhosting.conf'
@@ -622,6 +665,9 @@ public_url() {
     printf 'https://%s' "$DOMAIN"
   elif [ -n "$NGINX_OK" ] && [ -n "$DOMAIN" ]; then
     printf 'http://%s' "$DOMAIN"
+  elif port_is_local_only; then
+    # Published to loopback only: the LAN address would not answer.
+    printf 'http://127.0.0.1:%s' "$APP_PORT"
   else
     ip="$(hostname -I 2>/dev/null | awk '{print $1}')"
     [ -n "$ip" ] || ip="localhost"
@@ -786,9 +832,9 @@ locate_install() {
 }
 
 load_install() { # read the settings of the install in $OH_DIR
-  CURRENT_PORT="$(env_get APP_PORT)"
-  CURRENT_PORT="${CURRENT_PORT:-$DEFAULT_PORT}"
-  APP_PORT="$CURRENT_PORT"
+  parse_port_spec "$(env_get APP_PORT)"
+  APP_PORT="${APP_PORT:-$DEFAULT_PORT}"
+  CURRENT_PORT="$APP_PORT"
   [ -n "$ADMIN_EMAIL" ] || ADMIN_EMAIL="$(env_get SEED_ADMIN_EMAIL)"
   [ -n "$ADMIN_EMAIL" ] || ADMIN_EMAIL="admin@example.com"
   if nginx_enabled && [ -z "$DOMAIN" ]; then DOMAIN="$(nginx_configured_domain)"; fi
@@ -906,7 +952,7 @@ action_install() {
   fetch_source
   if [ -f "$OH_DIR/.env" ]; then
     info "Keeping existing secrets in $OH_DIR/.env"
-    env_set APP_PORT "$APP_PORT"
+    env_set APP_PORT "$(port_spec)"
     env_set SEED_ADMIN_EMAIL "$ADMIN_EMAIL"
   else
     write_fresh_env
@@ -944,8 +990,9 @@ action_install() {
 }
 
 action_upgrade() { # also used for --rebuild, with $1 = "rebuild"
-  local mode="${1:-upgrade}" setup_https=""
+  local mode="${1:-upgrade}" setup_https="" configured=""
   load_install
+  configured="$(nginx_configured_domain)"
 
   if [ "$mode" = upgrade ]; then
     info "Upgrading the install in $OH_DIR (v$(installed_version), port $APP_PORT)"
@@ -956,7 +1003,7 @@ action_upgrade() { # also used for --rebuild, with $1 = "rebuild"
   # The port may have been taken while the stack was down.
   if ! port_available "$APP_PORT"; then
     choose_port "$APP_PORT"
-    env_set APP_PORT "$APP_PORT"
+    env_set APP_PORT "$(port_spec)"
   fi
 
   # Offer HTTPS to installs that predate the nginx setup, before the long work.
@@ -977,8 +1024,13 @@ action_upgrade() { # also used for --rebuild, with $1 = "rebuild"
   fi
   wait_for_app || die "The app did not respond within 3 minutes. Check the logs: cd $OH_DIR && $COMPOSE_HINT logs app"
   run_seed
-  if [ -n "$NGINX_OK" ] || [ -n "$setup_https" ] || [ -n "$DOMAIN" ]; then
+  # A working vhost is left alone — an upgrade only makes sure it still points
+  # at the app. Packages, certificates and firewall rules are touched again
+  # only when HTTPS is being set up or a different domain was asked for.
+  if [ -n "$setup_https" ] || { [ -n "${OH_DOMAIN:-}" ] && [ "$OH_DOMAIN" != "$configured" ]; }; then
     run_nginx_setup
+  elif [ -n "$NGINX_OK" ]; then
+    nginx_sync_port
   fi
   summary
 }
@@ -1058,7 +1110,7 @@ action_reconfigure() {
   if [ "$want" != "$APP_PORT" ]; then
     valid_port "$want" || die "Invalid port: $want"
     choose_port "$want"
-    env_set APP_PORT "$APP_PORT"
+    env_set APP_PORT "$(port_spec)"
     changed=1
   fi
 
@@ -1099,7 +1151,8 @@ action_reconfigure() {
 action_status() {
   local code
   load_install
-  code="$(curl -fsS -o /dev/null -w '%{http_code}' "http://127.0.0.1:$APP_PORT/" 2>/dev/null || printf 'no answer')"
+  code="$(curl -s -o /dev/null -m 5 -w '%{http_code}' "http://127.0.0.1:$APP_PORT/" 2>/dev/null || true)"
+  case "${code:-000}" in 000) code="no answer" ;; esac
   printf '\n'
   info "OpenHosting in $OH_DIR"
   step "Version:    $(installed_version)"
@@ -1144,7 +1197,7 @@ action_reinstall() {
 }
 
 action_uninstall() {
-  local conf
+  local conf link
   load_install
   info "Uninstalling the OpenHosting stack in $OH_DIR"
   if [ -n "$INTERACTIVE" ]; then
@@ -1162,8 +1215,13 @@ action_uninstall() {
   fi
 
   conf="$(nginx_conf_path)"
-  if [ -f "$conf" ] && [ -n "$INTERACTIVE" ] && confirm "  Remove the nginx site for OpenHosting?" n; then
-    $SUDO rm -f "$conf" /etc/nginx/sites-enabled/openhosting.conf
+  if [ -f "$conf" ] && [ -n "$INTERACTIVE" ] && confirm "  Remove the nginx site ($conf)?" n; then
+    $SUDO rm -f "$conf"
+    for link in /etc/nginx/sites-enabled/*; do
+      if [ -L "$link" ] && [ "$(readlink -f "$link" 2>/dev/null)" = "$conf" ]; then
+        $SUDO rm -f "$link"
+      fi
+    done
     nginx_reload || true
     step "nginx site removed (certificates under /etc/letsencrypt were kept)."
   fi
@@ -1254,9 +1312,9 @@ summary() {
 require_docker
 
 if locate_install; then
-  CURRENT_PORT="$(env_get APP_PORT)"
-  CURRENT_PORT="${CURRENT_PORT:-$DEFAULT_PORT}"
-  APP_PORT="$CURRENT_PORT"
+  parse_port_spec "$(env_get APP_PORT)"
+  APP_PORT="${APP_PORT:-$DEFAULT_PORT}"
+  CURRENT_PORT="$APP_PORT"
   if [ -z "$ACTION" ]; then
     if [ -n "$INTERACTIVE" ]; then
       DOMAIN="${DOMAIN:-$(nginx_configured_domain)}"
