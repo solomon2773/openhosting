@@ -26,6 +26,9 @@ services:
       DATABASE_URL: postgresql://openhosting:${DB_PASSWORD:-openhosting}@db:5432/openhosting
       DIRECT_URL: postgresql://openhosting:${DB_PASSWORD:-openhosting}@db:5432/openhosting
       CRON_SECRET: ${CRON_SECRET:-change-me}
+      # Only read by the seed, so re-seeding keeps the admin address chosen at
+      # install time instead of adding a second admin@example.com.
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-}
     ports:
       - "${APP_PORT:-3000}:3000"
 

@@ -55,7 +55,14 @@ After seeding:
 | Customer | `demo@example.com` | `demo12345` |
 
 **Change the admin password immediately** on a real deployment — or seed with
-your own via `SEED_ADMIN_PASSWORD` (see the [environment reference](environment.md)).
+your own via `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` (see the
+[environment reference](environment.md)). Both are applied only when the
+account is created; to change an existing password from the shell use
+`npm run db:reset-admin -- --email you@example.com --password-stdin` (add
+`--list` to see the staff accounts, `--disable-2fa` to clear two-factor auth).
+In Docker the same script is `node prisma/reset-admin.mjs` inside the app
+container, or the [installer's](docker.md#resetting-the-admin-password)
+`--reset-password` action.
 
 ## What the seed creates
 
@@ -77,6 +84,7 @@ your own via `SEED_ADMIN_PASSWORD` (see the [environment reference](environment.
 | `npm run db:push` | Sync schema to the database (dev) |
 | `npm run db:migrate` | Apply migrations (production) |
 | `npm run db:seed` | Seed demo data |
+| `npm run db:reset-admin` | Reset a staff password (`-- --list` to see accounts) |
 
 See [CLI & scripts](../cli.md) for the full list.
 
@@ -86,4 +94,8 @@ See [CLI & scripts](../cli.md) for the full list.
   Postgres is running and reachable on that host/port.
 - **Prisma client errors after pulling changes** — run `npm run db:generate`
   (or `npx prisma generate`) to regenerate the client.
-- **Port 3000 in use** — set `PORT=3001` in your environment.
+- **Port 3000 in use** — set `PORT=3001` in your environment. On a Docker
+  install, the [installer](docker.md#ports) offers the free ports nearby and
+  `--reconfigure` moves an existing install to another port.
+- **Locked out of the admin account** — reset it from the shell, see
+  [Default logins](#default-logins) above.

@@ -18,6 +18,19 @@ Customers reset a forgotten password via an emailed one-time link. Reset tokens
 are stored as SHA-256 hashes and expire after 60 minutes; resetting revokes all
 existing sessions.
 
+Staff who are locked out — no mail configured yet, or a lost authenticator —
+are recovered from the server instead: re-run the installer and pick **Reset the
+admin password**, or run the same tool by hand:
+
+```bash
+printf '%s' 'a-strong-password' | docker compose exec -T app \
+  node prisma/reset-admin.mjs --email you@example.com --password-stdin --disable-2fa
+```
+
+It revokes that account's sessions and pending reset links and writes an
+`auth.password_reset` entry to the audit log. See
+[Docker](../getting-started/docker.md#resetting-the-admin-password).
+
 ## Two-factor authentication (2FA)
 
 Customers enable TOTP two-factor auth under **Account**:

@@ -5,12 +5,25 @@ any new database migrations, and restart.
 
 ## Docker / docker-compose
 
-If you used the one-line installer, just re-run it — it pulls the new code,
-rebuilds and restarts while keeping your `.env` and data:
+If you used the one-line installer, just re-run it — it recognises the existing
+install and offers to upgrade it, which pulls the new code, rebuilds and
+restarts while keeping your `.env`, data and nginx/HTTPS setup:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/solomon2773/openhosting/main/install.sh | bash
 ```
+
+Pick **Upgrade to the latest version**, or skip the menu entirely — without a
+terminal (cron, CI) a re-run upgrades in place, and `--upgrade` forces it:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/solomon2773/openhosting/main/install.sh \
+  | bash -s -- --upgrade
+```
+
+The same menu also rebuilds stuck containers, resets the admin password and
+changes the port or domain — see the
+[installer reference](docker.md#managing-an-install).
 
 Or manually:
 

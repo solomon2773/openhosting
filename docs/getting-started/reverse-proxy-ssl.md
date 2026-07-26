@@ -4,6 +4,15 @@ OpenHosting listens on plain HTTP (port 3000). In production you put a reverse
 proxy in front of it to terminate TLS, and set **Admin → Settings → Public
 URL** to your `https://` address so emails and payment redirects are correct.
 
+> **The [one-line installer](docker.md#one-line-install-recommended) does this
+> for you**: it installs nginx, proxies it to the app, and obtains a Let's
+> Encrypt certificate for your domain (`--domain`, or answer its prompt) with
+> automatic renewal. Adding the domain later — or moving the app to another
+> port, which repoints nginx too — is the installer's
+> [`--reconfigure`](docker.md#managing-an-install) action. The sections below
+> are for custom or manual setups; pass `--no-nginx` (`OH_SKIP_NGINX=1`) to
+> bring your own proxy.
+
 ## Caddy (automatic HTTPS)
 
 The simplest option — Caddy fetches and renews certificates automatically:

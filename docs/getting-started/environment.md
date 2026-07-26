@@ -11,7 +11,8 @@ currency and SMTP is configured in the admin panel instead — see
 | `DIRECT_URL` | ✔ | Direct PostgreSQL connection used for migrations. On non-pooled Postgres, set it to the same value as `DATABASE_URL`. |
 | `CRON_SECRET` | ✔ | Bearer token protecting `POST /api/cron`. Generate with `openssl rand -hex 32`. |
 | `SKIP_MIGRATIONS` | | `true` skips `prisma migrate deploy` in the container entrypoint (when migrations run elsewhere). |
-| `SEED_ADMIN_PASSWORD` | | Admin password used by `npm run db:seed`. Defaults to `admin12345`. |
+| `SEED_ADMIN_PASSWORD` | | Admin password used by `npm run db:seed`, applied only when the account is created. Defaults to `admin12345`. |
+| `SEED_ADMIN_EMAIL` | | Address of the admin account the seed creates. Defaults to `admin@example.com`; the installer writes the address you chose here so re-seeding never adds a second admin. |
 | `PORT` | | Port the server listens on (default `3000`). |
 | `NODE_ENV` | | Set to `production` in production (the image sets this). |
 | `SHADOW_DATABASE_URL` | | Only for generating new migrations locally — a spare database Prisma uses as a shadow. |

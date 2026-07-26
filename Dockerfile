@@ -14,12 +14,14 @@ COPY . .
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
 ENV DIRECT_URL="postgresql://build:build@localhost:5432/build"
 RUN npx prisma generate && npm run build
-# Bundle the seed so it runs with plain node inside the runtime image
-# (`docker compose exec app node prisma/seed.mjs`) — no Node needed on the host.
+# Bundle the seed and the admin-recovery script so they run with plain node
+# inside the runtime image (`docker compose exec app node prisma/seed.mjs`) —
+# no Node needed on the host.
 # Only packages Next's standalone output ships may stay external.
-RUN npx esbuild prisma/seed.ts --bundle --platform=node --format=esm \
+RUN npx esbuild prisma/seed.ts prisma/reset-admin.ts \
+      --bundle --platform=node --format=esm \
       --external:@prisma/client --external:pg --external:bcryptjs \
-      --outfile=prisma/seed.mjs
+      --out-extension:.js=.mjs --outdir=prisma
 
 # ── prisma CLI (isolated, for migrate deploy at runtime) ────────────────────
 FROM node:24-alpine AS prisma-cli

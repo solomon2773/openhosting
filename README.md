@@ -104,15 +104,29 @@ dependency. No license fees, no legacy stack.
 
 ## 🚀 Quick start
 
-One command on a fresh Linux server — it installs Docker if needed, generates
-secrets, starts the stack and seeds the first admin account:
+One command on a fresh Linux server — it installs Docker if needed, asks for
+your port, domain and admin login, generates secrets, starts the stack, seeds
+the account, and sets up nginx with a free HTTPS certificate for your domain:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/solomon2773/openhosting/main/install.sh | bash
 ```
 
-Open `http://your-server:3000` and sign in with the admin credentials the
-script prints. Re-run the same command any time to update.
+Give it a domain when it asks (or pass `--domain billing.example.com`) and it
+comes up on `https://` with auto-renewing Let's Encrypt certificates — or leave
+it empty to serve plain HTTP until DNS is ready. If port 3000 is taken it offers
+the free ports next to it instead of failing halfway through.
+
+Run the same command again to manage that install: upgrade, rebuild, **reset
+the admin password**, change the port or domain, reinstall or uninstall. Every
+action is also a flag, so it scripts cleanly:
+
+```bash
+curl -fsSL …/install.sh | bash -s -- --upgrade          # unattended update
+curl -fsSL …/install.sh | bash -s -- --reset-password   # locked out
+```
+
+See the [installer reference](docs/getting-started/docker.md#one-line-install-recommended).
 
 <details>
 <summary>Manual Docker setup</summary>

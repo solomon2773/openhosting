@@ -67,12 +67,15 @@ async function main() {
     create: { name: "Support", permissions: ["tickets", "users"] },
   });
 
+  // The installer asks the operator for these on the first run and keeps them
+  // in .env, so re-seeding never creates a second admin.
+  const adminEmail = (process.env.SEED_ADMIN_EMAIL || "admin@example.com").trim().toLowerCase();
   const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? "admin12345";
   const admin = await db.user.upsert({
-    where: { email: "admin@example.com" },
+    where: { email: adminEmail },
     update: {},
     create: {
-      email: "admin@example.com",
+      email: adminEmail,
       password: await bcrypt.hash(adminPassword, 10),
       firstName: "Ada",
       lastName: "Admin",
@@ -492,7 +495,7 @@ async function main() {
   });
 
   console.log("Seed complete.");
-  console.log("  Admin: admin@example.com / " + adminPassword);
+  console.log(`  Admin: ${adminEmail} / ${adminPassword}`);
   console.log("  Demo customer: demo@example.com / demo12345");
 }
 

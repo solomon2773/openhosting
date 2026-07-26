@@ -15,6 +15,21 @@ Nothing. It's MIT licensed — free for commercial use, no per-client fees.
 Node.js 24+ and a PostgreSQL database. That's it. It deploys as a single
 container. See [Installation](getting-started/installation.md).
 
+## I'm locked out of the admin account — how do I get back in?
+
+Re-run the installer and pick **Reset the admin password** (or pass
+`--reset-password`). It lists the staff accounts, sets a new password and can
+clear two-factor auth on that account at the same time. Details in
+[Docker](getting-started/docker.md#resetting-the-admin-password).
+
+## How do I change the port, or add HTTPS later?
+
+Re-run the installer and pick **Change the port or domain** (or pass
+`--reconfigure`). It moves the app to the new port and repoints nginx at it, and
+requests a Let's Encrypt certificate when you give it a domain. If the port you
+want is taken, the installer says what is holding it and offers free ones
+nearby. See [Ports](getting-started/docker.md#ports).
+
 ## Does it work with Supabase?
 
 Yes — Supabase is just PostgreSQL. Use the pooled connection string for
