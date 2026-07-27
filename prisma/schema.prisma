@@ -192,6 +192,18 @@ model VerificationToken {
   createdAt DateTime  @default(now())
 }
 
+// Failed sign-ins (password and 2FA), counted to lock an account or an address
+// out for a while. Cleared on a successful sign-in, pruned by the hourly cron.
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  email     String
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([email, createdAt])
+  @@index([ip, createdAt])
+}
+
 // ── Catalog ─────────────────────────────────────────────────────────────────
 
 model Category {

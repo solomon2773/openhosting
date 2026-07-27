@@ -14,6 +14,12 @@ import {
   verifyPassword,
 } from "@/lib/auth";
 import { verifyTotp, generateTotpSecret } from "@/lib/totp";
+import {
+  checkLoginBlocked,
+  clearLoginFailures,
+  clientIp,
+  recordLoginFailure,
+} from "@/lib/services/login-guard";
 import { headers } from "next/headers";
 import { getSetting, getSettings } from "@/lib/settings";
 import { sendTemplate } from "@/lib/mail";
@@ -22,6 +28,12 @@ import { audit } from "@/lib/audit";
 export type FormState = { error?: string; success?: string } | null;
 
 const TWO_FA_COOKIE = "oh_2fa";
+
+function lockedOutMessage(minutes: number): string {
+  return `Too many failed sign-in attempts. Try again in ${minutes} minute${
+    minutes === 1 ? "" : "s"
+  }.`;
+}
 
 // ── Login ───────────────────────────────────────────────────────────────────
 
@@ -37,11 +49,21 @@ export async function login(
   const parsed = loginSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: "Enter a valid email and password." };
 
-  const user = await db.user.findUnique({
-    where: { email: parsed.data.email.toLowerCase() },
-  });
+  const email = parsed.data.email.toLowerCase();
+  const ip = await clientIp();
+
+  // Checked before the lookup, so an address that does not exist behaves the
+  // same as one that does and the message gives nothing away.
+  const blocked = await checkLoginBlocked(email, ip);
+  if (blocked) {
+    await audit("auth.login_blocked", { metadata: { email } });
+    return { error: lockedOutMessage(blocked.retryAfterMinutes) };
+  }
+
+  const user = await db.user.findUnique({ where: { email } });
   if (!user || !(await verifyPassword(parsed.data.password, user.password))) {
-    await audit("auth.login_failed", { metadata: { email: parsed.data.email } });
+    await recordLoginFailure(email, ip);
+    await audit("auth.login_failed", { metadata: { email } });
     return { error: "Invalid email or password." };
   }
 
@@ -58,6 +80,7 @@ export async function login(
     redirect("/two-factor");
   }
 
+  await clearLoginFailures(email);
   await createSession(user.id);
   await audit("auth.login", { userId: user.id });
   redirect(user.roleId ? "/admin" : "/dashboard");
@@ -76,8 +99,11 @@ export async function verifyTwoFactor(
   if (!userId) redirect("/login");
 
   const user = await db.user.findUnique({ where: { id: userId } });
-  if (!user?.totpSecret || !verifyTotp(user.totpSecret, code)) {
-    // token is consumed; issue a fresh one so the user can retry
+  const ip = await clientIp();
+
+  // Guessing a six-digit code is cheap, so the second step spends the same
+  // budget as the password step.
+  const reissue = async () => {
     const fresh = await createToken(userId, "TWO_FACTOR", 10);
     cookieStore.set(TWO_FA_COOKIE, fresh, {
       httpOnly: true,
@@ -86,10 +112,33 @@ export async function verifyTwoFactor(
       path: "/",
       maxAge: 600,
     });
+  };
+
+  if (user) {
+    const blocked = await checkLoginBlocked(user.email, ip);
+    if (blocked) {
+      await audit("auth.login_blocked", {
+        userId: user.id,
+        metadata: { step: "2fa" },
+      });
+      await reissue();
+      return { error: lockedOutMessage(blocked.retryAfterMinutes) };
+    }
+  }
+
+  if (!user?.totpSecret || !verifyTotp(user.totpSecret, code)) {
+    if (user) await recordLoginFailure(user.email, ip);
+    await audit("auth.login_failed", {
+      userId: user?.id,
+      metadata: { step: "2fa" },
+    });
+    // token is consumed; issue a fresh one so the user can retry
+    await reissue();
     return { error: "Invalid code, try again." };
   }
 
   cookieStore.delete(TWO_FA_COOKIE);
+  await clearLoginFailures(user.email);
   await createSession(user.id);
   await audit("auth.login_2fa", { userId: user.id });
   redirect(user.roleId ? "/admin" : "/dashboard");
@@ -269,6 +318,12 @@ export async function disableTwoFactor(
   formData: FormData,
 ): Promise<FormState> {
   const user = await requireUser();
+  if (user.roleId && (await getSetting("require_staff_2fa")) === "true") {
+    return {
+      error:
+        "Two-factor authentication is required for staff accounts and cannot be turned off.",
+    };
+  }
   const password = String(formData.get("password") ?? "");
   if (!(await verifyPassword(password, user.password))) {
     return { error: "Incorrect password." };

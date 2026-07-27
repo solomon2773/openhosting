@@ -1,4 +1,4 @@
-import { requireUser } from "@/lib/auth";
+import { requireUser, staffNeedsTwoFactor } from "@/lib/auth";
 import { getT } from "@/lib/i18n";
 import { db } from "@/lib/db";
 import {
@@ -30,6 +30,8 @@ const PROFILE_FIELDS = [
 export default async function AccountPage() {
   const user = await requireUser();
   const t = await getT();
+  // Staff sent here by the admin guard need to know why.
+  const twoFactorRequired = await staffNeedsTwoFactor(user);
   const prefs = await db.notificationPreference.findMany({
     where: { userId: user.id },
   });
@@ -151,6 +153,13 @@ export default async function AccountPage() {
 
       <div className="card p-6">
         <h2 className="mb-2 font-semibold">Two-factor authentication</h2>
+        {twoFactorRequired && (
+          <p className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
+            Your account has staff access, and this installation requires
+            two-factor authentication for staff. Set it up below to reach the
+            admin panel.
+          </p>
+        )}
         {user.totpEnabledAt ? (
           <div>
             <p className="text-sm text-green-700">

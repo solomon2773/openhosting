@@ -37,6 +37,12 @@ See [Billing automation](../billing/automation.md) for how these drive the cron.
 |---|---|
 | Turnstile site/secret key | Cloudflare Turnstile captcha keys |
 | Captcha on checkout | Also require captcha at checkout, not just registration |
+| Require two-factor authentication for staff | Anyone with a role must enable 2FA before the admin panel opens, and cannot turn it off |
+| Failed sign-ins before an account is locked | Password and 2FA failures counted per account (0 = off, default 5) |
+| Failed sign-ins from one IP before it is locked | The same budget per client address, across all accounts (0 = off, default 20) |
+| Lockout duration (minutes) | How long a lockout lasts, and the window failures are counted over (default 15) |
+
+Both are covered in [Accounts & security](../guides/accounts-security.md#sign-in-throttling).
 
 ### Fraud
 

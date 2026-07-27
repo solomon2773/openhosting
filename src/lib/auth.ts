@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { randomBytes, createHash } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
+import { getSetting } from "@/lib/settings";
 import type { Prisma } from "@/generated/prisma/client";
 
 const SESSION_COOKIE = "oh_session";
@@ -71,9 +72,18 @@ export function hasPermission(user: SessionUser, permission: string): boolean {
   return perms.includes("*") || perms.includes(permission);
 }
 
+/** Staff 2FA can be made mandatory — see `require_staff_2fa`. */
+export async function staffNeedsTwoFactor(user: SessionUser): Promise<boolean> {
+  if (!user.roleId || user.totpEnabledAt) return false;
+  return (await getSetting("require_staff_2fa")) === "true";
+}
+
 export async function requireAdmin(permission = "admin"): Promise<SessionUser> {
   const user = await requireUser();
   if (!user.role || !hasPermission(user, permission)) redirect("/dashboard");
+  // Every admin page and server action passes through here, so this is the one
+  // place the requirement has to hold.
+  if (await staffNeedsTwoFactor(user)) redirect("/dashboard/account");
   return user;
 }
 

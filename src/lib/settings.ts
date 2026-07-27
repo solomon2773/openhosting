@@ -19,6 +19,15 @@ export const SETTING_DEFAULTS: Record<string, string> = {
   turnstile_site_key: "",
   turnstile_secret: "",
   turnstile_on_checkout: "false",
+  // ── Sign-in protection ──
+  // failed sign-ins for one account before it is locked out (0 = off)
+  login_max_attempts: "5",
+  // failed sign-ins from one IP across all accounts (0 = off)
+  login_ip_max_attempts: "20",
+  // how long a lockout lasts, and the window failures are counted over
+  login_lockout_minutes: "15",
+  // staff (anyone with a role) must have 2FA on to reach the admin panel
+  require_staff_2fa: "false",
   // ── Fraud prevention ──
   fraud_review_all: "false",
   // external risk score (0-99) at or above which orders go to manual review

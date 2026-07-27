@@ -52,6 +52,28 @@ const SECTIONS: Array<{
       },
       { key: "turnstile_secret", label: "Turnstile secret key", type: "password" },
       { key: "turnstile_on_checkout", label: "Captcha on checkout", type: "checkbox" },
+      {
+        key: "require_staff_2fa",
+        label: "Require two-factor authentication for staff",
+        type: "checkbox",
+        help: "Staff cannot open the admin panel until they enable it, and cannot turn it back off.",
+      },
+      {
+        key: "login_max_attempts",
+        label: "Failed sign-ins before an account is locked (0 = off)",
+        type: "number",
+      },
+      {
+        key: "login_ip_max_attempts",
+        label: "Failed sign-ins from one IP before it is locked (0 = off)",
+        type: "number",
+      },
+      {
+        key: "login_lockout_minutes",
+        label: "Lockout duration (minutes)",
+        type: "number",
+        help: "Also the window failed attempts are counted over.",
+      },
     ],
   },
   {
