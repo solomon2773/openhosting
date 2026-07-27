@@ -21,7 +21,7 @@ import {
   recordLoginFailure,
 } from "@/lib/services/login-guard";
 import { headers } from "next/headers";
-import { getSetting, getSettings } from "@/lib/settings";
+import { getSetting, getSettings, publicUrlForEmail } from "@/lib/settings";
 import { sendTemplate } from "@/lib/mail";
 import { audit } from "@/lib/audit";
 
@@ -214,17 +214,18 @@ export async function register(
     await attributeReferral(user.id, cookieStore.get(REF_COOKIE)?.value ?? null);
   }
 
-  const settings = await getSettings(["company_name", "company_url"]);
+  const settings = await getSettings(["company_name"]);
+  const baseUrl = await publicUrlForEmail();
   await sendTemplate(user.email, "welcome", {
     name: user.firstName,
     company: settings.company_name,
-    url: settings.company_url,
+    url: baseUrl,
   });
   if ((await getSetting("require_email_verification")) === "true") {
     const raw = await createToken(user.id, "EMAIL_VERIFICATION");
     await sendTemplate(user.email, "verify_email", {
       name: user.firstName,
-      link: `${settings.company_url}/verify-email?token=${raw}`,
+      link: `${baseUrl}/verify-email?token=${raw}`,
     });
   } else {
     await db.user.update({
@@ -254,7 +255,7 @@ export async function forgotPassword(
   const user = await db.user.findUnique({ where: { email } });
   if (user) {
     const raw = await createToken(user.id, "PASSWORD_RESET");
-    const url = await getSetting("company_url");
+    const url = await publicUrlForEmail();
     await sendTemplate(user.email, "password_reset", {
       name: user.firstName,
       link: `${url}/reset-password?token=${raw}`,

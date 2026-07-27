@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireAdmin, requireUser } from "@/lib/auth";
-import { getSettings } from "@/lib/settings";
+import { getSettings, publicUrlForEmail } from "@/lib/settings";
 import { sendMail } from "@/lib/mail";
 import { audit } from "@/lib/audit";
 import { formatMoney } from "@/lib/format";
@@ -69,11 +69,12 @@ export async function sendQuote(formData: FormData): Promise<void> {
     data: { status: "SENT" },
     include: { user: true },
   });
-  const settings = await getSettings(["company_name", "company_url"]);
+  const settings = await getSettings(["company_name"]);
+  const baseUrl = await publicUrlForEmail();
   await sendMail(
     quote.user.email,
     `Quote #${quote.number} from ${settings.company_name}`,
-    `<p>Hi ${quote.user.firstName},</p><p>We've prepared quote <strong>#${quote.number}</strong> for ${formatMoney(quote.total, quote.currency)}. Review and accept it at <a href="${settings.company_url}/dashboard/quotes/${quote.id}">${settings.company_url}/dashboard/quotes/${quote.id}</a>.</p>`,
+    `<p>Hi ${quote.user.firstName},</p><p>We've prepared quote <strong>#${quote.number}</strong> for ${formatMoney(quote.total, quote.currency)}. Review and accept it at <a href="${baseUrl}/dashboard/quotes/${quote.id}">${baseUrl}/dashboard/quotes/${quote.id}</a>.</p>`,
   );
   await audit("admin.quote_sent", { userId: admin.id, targetId: id });
   revalidatePath(`/admin/quotes/${id}`);

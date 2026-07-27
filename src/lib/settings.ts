@@ -72,6 +72,48 @@ export async function getSettings(
   );
 }
 
+const trimTrailingSlashes = (url: string) => url.replace(/\/+$/, "");
+
+async function requestOrigin(): Promise<string | null> {
+  try {
+    // Imported lazily: standalone scripts pull this module in too, and they
+    // have no Next request runtime.
+    const { headers } = await import("next/headers");
+    const h = await headers();
+    const host = h.get("x-forwarded-host") ?? h.get("host");
+    if (!host) return null;
+    const proto = h.get("x-forwarded-proto")?.split(",")[0]?.trim() || "https";
+    return `${proto}://${host}`;
+  } catch {
+    return null; // no request in scope (cron tick, importers, seed)
+  }
+}
+
+/**
+ * Base URL for links the app shows or hands to a payment gateway.
+ *
+ * **Admin → Settings → Public URL** always wins. Until an operator sets it the
+ * value is the `http://localhost:3000` placeholder, which is useless in a link,
+ * so during a request we fall back to the address that request arrived on — a
+ * fresh install shows its real hostname instead of localhost. Outside a request
+ * there is nothing to fall back to and the setting is used as it stands.
+ */
+export async function publicUrl(): Promise<string> {
+  const configured = trimTrailingSlashes(await getSetting("company_url"));
+  if (configured && configured !== SETTING_DEFAULTS.company_url) return configured;
+  return (await requestOrigin()) ?? configured ?? SETTING_DEFAULTS.company_url;
+}
+
+/**
+ * Same, for links that get emailed — and deliberately never trusts the request.
+ * A password-reset link goes to the account owner, not to whoever asked for it,
+ * so it must not be steerable through a forged Host header.
+ */
+export async function publicUrlForEmail(): Promise<string> {
+  const configured = trimTrailingSlashes(await getSetting("company_url"));
+  return configured || SETTING_DEFAULTS.company_url;
+}
+
 export async function setSetting(key: string, value: string): Promise<void> {
   await db.setting.upsert({
     where: { key },

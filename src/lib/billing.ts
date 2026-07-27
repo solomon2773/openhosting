@@ -1,7 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db";
 import { addCycle, formatMoney, formatDate } from "@/lib/format";
-import { getSetting, getSettings } from "@/lib/settings";
+import { getSetting, getSettings, publicUrlForEmail } from "@/lib/settings";
 import { notifyUser } from "@/lib/services/notifications";
 import { creditCommission } from "@/lib/services/affiliates";
 import {
@@ -30,7 +30,7 @@ async function activateService(serviceId: string) {
   await provisionCreate(service);
   const { resaleProvision } = await import("@/lib/services/resale");
   await resaleProvision(service);
-  const url = await getSetting("company_url");
+  const url = await publicUrlForEmail();
   await notifyUser(service.user, "service_activated", {
     title: `${service.product.name} is now active`,
     link: `/dashboard/services/${service.id}`,
@@ -180,8 +180,8 @@ export async function generateRenewalInvoices(): Promise<number> {
     "invoice_days_before",
     "currency",
     "company_name",
-    "company_url",
   ]);
+  const emailBaseUrl = await publicUrlForEmail();
   const horizon = new Date(
     Date.now() + Number(settings.invoice_days_before) * DAY_MS,
   );
@@ -253,7 +253,7 @@ export async function generateRenewalInvoices(): Promise<number> {
         company: settings.company_name,
         total: formatMoney(total, currency),
         due: formatDate(invoice.dueAt),
-        link: `${settings.company_url}/dashboard/invoices/${invoice.id}`,
+        link: `${emailBaseUrl}/dashboard/invoices/${invoice.id}`,
       },
     });
   }

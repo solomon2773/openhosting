@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 import { hashPassword, requireUser, verifyPassword } from "@/lib/auth";
 import { payWithCredits, startGatewayPayment } from "@/lib/services/payments";
 import { audit } from "@/lib/audit";
-import { getSettings } from "@/lib/settings";
+import { getSettings, publicUrlForEmail } from "@/lib/settings";
 import { sendTemplate } from "@/lib/mail";
 import type { FormState } from "@/lib/actions/auth";
 
@@ -271,7 +271,7 @@ export async function replyTicket(
 
   // Notify the customer of staff replies
   if (isStaff && ticket.userId !== user.id) {
-    const settings = await getSettings(["company_url"]);
+    const baseUrl = await publicUrlForEmail();
     const { notifyUser } = await import("@/lib/services/notifications");
     await notifyUser(ticket.user, "ticket_reply", {
       title: `New reply on ticket #${ticket.number}`,
@@ -282,7 +282,7 @@ export async function replyTicket(
         name: ticket.user.firstName,
         ticket: String(ticket.number),
         subject: ticket.subject,
-        link: `${settings.company_url}/dashboard/tickets/${ticket.id}`,
+        link: `${baseUrl}/dashboard/tickets/${ticket.id}`,
       },
     });
   }

@@ -2,7 +2,7 @@ import "server-only";
 import { db } from "@/lib/db";
 import { getGatewayDriver } from "@/lib/extensions/registry";
 import { extensionConfig, type PayResult } from "@/lib/extensions/types";
-import { getSetting } from "@/lib/settings";
+import { getSetting, publicUrl } from "@/lib/settings";
 import { markInvoicePaid } from "@/lib/billing";
 import { convertToBase } from "@/lib/services/currency";
 
@@ -30,7 +30,7 @@ export async function startGatewayPayment(
   const driver = getGatewayDriver(gatewaySlug);
   if (!driver) throw new Error("Unknown payment gateway");
 
-  const baseUrl = await getSetting("company_url");
+  const baseUrl = await publicUrl();
   return driver.pay(invoice, extensionConfig(extension), {
     success: `${baseUrl}/dashboard/invoices/${invoice.id}?paid=1`,
     cancel: `${baseUrl}/dashboard/invoices/${invoice.id}`,
@@ -98,7 +98,7 @@ export async function startPaymentMethodSetup(
   const existing = await db.storedPaymentMethod.findFirst({
     where: { userId, gateway: gatewaySlug },
   });
-  const baseUrl = await getSetting("company_url");
+  const baseUrl = await publicUrl();
   const { url } = await resolved.driver.createSetupRedirect!(
     user,
     existing?.customerId ?? null,

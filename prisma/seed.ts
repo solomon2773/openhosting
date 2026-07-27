@@ -261,9 +261,11 @@ async function main() {
   });
 
   // ── Settings & email templates ────────────────────────────────────────────
+  const PLACEHOLDER_URL = "http://localhost:3000";
+  const appUrl = (process.env.APP_URL ?? "").trim().replace(/\/+$/, "");
   const settings: Record<string, string> = {
     company_name: "OpenHosting",
-    company_url: process.env.APP_URL ?? "http://localhost:3000",
+    company_url: appUrl || PLACEHOLDER_URL,
     currency: "USD",
   };
   for (const [key, value] of Object.entries(settings)) {
@@ -271,6 +273,15 @@ async function main() {
       where: { key },
       update: {},
       create: { key, value },
+    });
+  }
+  // The placeholder is nobody's choice — it just means "not configured yet".
+  // Once the installer knows the real address, replace it; a URL an operator
+  // actually set is never touched.
+  if (appUrl) {
+    await db.setting.updateMany({
+      where: { key: "company_url", value: PLACEHOLDER_URL },
+      data: { value: appUrl },
     });
   }
   for (const template of EMAIL_TEMPLATES) {

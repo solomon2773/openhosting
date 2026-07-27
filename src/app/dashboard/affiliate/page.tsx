@@ -1,6 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { getSettings } from "@/lib/settings";
+import { getSettings, publicUrl } from "@/lib/settings";
 import { formatDate, formatMoney } from "@/lib/format";
 import { joinAffiliateProgram } from "@/lib/actions/fraud-affiliates";
 import { SubmitButton } from "@/components/forms";
@@ -9,13 +9,13 @@ export const metadata = { title: "Affiliate program" };
 
 export default async function AffiliatePage() {
   const user = await requireUser();
+  const baseUrl = await publicUrl();
   const settings = await getSettings([
     "affiliate_enabled",
     "affiliate_commission_type",
     "affiliate_commission_value",
     "affiliate_recurring",
     "affiliate_payout_threshold",
-    "company_url",
     "currency",
   ]);
 
@@ -63,7 +63,7 @@ export default async function AffiliatePage() {
           <div className="card mt-6 p-5">
             <p className="label">Your referral link</p>
             <code className="block rounded-lg bg-slate-100 px-3 py-2 text-sm break-all">
-              {settings.company_url}/r/{affiliate.code}
+              {baseUrl}/r/{affiliate.code}
             </code>
             <p className="mt-2 text-xs text-slate-400">
               Referrals are attributed for 30 days after a click (last click

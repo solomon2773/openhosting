@@ -566,16 +566,22 @@ staff_status() { # none | some | unknown
 }
 
 run_seed() { # run_seed [initial admin password]
-  local password="${1:-}" log rc=0
+  local password="${1:-}" log rc=0 app_url=""
+  # With a domain we know the site's real address, so the seed can replace the
+  # localhost placeholder that would otherwise end up in emails, payment
+  # redirects and referral links.
+  [ -n "$DOMAIN" ] && app_url="https://$DOMAIN"
   log="$(mktemp)"
   info "Seeding the database (admin account, sample catalog)…"
   if [ -n "$password" ]; then
     # The password arrives on stdin so it never shows up in `ps` or in the
     # container's environment.
-    printf '%s' "$password" | compose_stdin exec -T -e SEED_ADMIN_EMAIL="$ADMIN_EMAIL" app \
+    printf '%s' "$password" | compose_stdin exec -T \
+      -e SEED_ADMIN_EMAIL="$ADMIN_EMAIL" -e APP_URL="$app_url" app \
       sh -c 'SEED_ADMIN_PASSWORD="$(cat)" exec node prisma/seed.mjs' >"$log" 2>&1 || rc=$?
   else
-    compose exec -T -e SEED_ADMIN_EMAIL="$ADMIN_EMAIL" app node prisma/seed.mjs >"$log" 2>&1 || rc=$?
+    compose exec -T -e SEED_ADMIN_EMAIL="$ADMIN_EMAIL" -e APP_URL="$app_url" app \
+      node prisma/seed.mjs >"$log" 2>&1 || rc=$?
   fi
   if [ "$rc" -ne 0 ]; then
     warn "The seed failed:"

@@ -20,6 +20,14 @@ sections:
 | Allow new registrations | Toggle public signup |
 | Require email verification | Force email confirmation after signup |
 
+**Public URL** deserves a word: it is the base for referral links, payment
+success/cancel/webhook URLs and every link in an outgoing email. The installer
+sets it for you when you give it a domain. Until it is set it holds the
+`http://localhost:3000` placeholder — pages then fall back to the address the
+request arrived on, so nothing user-facing shows `localhost`, but **emails
+cannot use that fallback** (a mailed link must not be steerable through a
+forged `Host` header), so set it on any install that sends mail.
+
 ### Billing automation
 
 | Setting | Purpose |

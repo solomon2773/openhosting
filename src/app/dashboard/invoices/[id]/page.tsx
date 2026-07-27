@@ -17,7 +17,7 @@ export default async function InvoiceDetailPage({
   const user = await requireUser();
   const t = await getT();
   const [settings, invoice, gateways] = await Promise.all([
-    getSettings(["company_name", "company_url"]),
+    getSettings(["company_name"]),
     db.invoice.findUnique({
       where: { id },
       include: { items: true, payments: true },
