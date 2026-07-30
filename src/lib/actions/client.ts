@@ -231,6 +231,26 @@ export async function createTicket(
     targetType: "ticket",
     targetId: ticket.id,
   });
+  // Optional classification. A provider outage must never cost the customer
+  // their ticket, so failure here is swallowed — their own choices stand.
+  try {
+    const { triageTicket } = await import("@/lib/services/ai");
+    const triage = await triageTicket(ticket.id);
+    if (triage) {
+      await db.ticket.update({
+        where: { id: ticket.id },
+        data: { department: triage.department, priority: triage.priority },
+      });
+      await audit("ticket.triaged", {
+        userId: user.id,
+        targetType: "ticket",
+        targetId: ticket.id,
+        metadata: { ...triage, via: "ai" },
+      });
+    }
+  } catch {
+    // classification is best-effort
+  }
   redirect(`/dashboard/tickets/${ticket.id}`);
 }
 

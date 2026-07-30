@@ -1,6 +1,11 @@
 import "server-only";
 import { db } from "@/lib/db";
-import type { GatewayDriver, ServerDriver, ResaleDriver } from "@/lib/extensions/types";
+import type {
+  AiDriver,
+  GatewayDriver,
+  ServerDriver,
+  ResaleDriver,
+} from "@/lib/extensions/types";
 import { stripeGateway } from "@/lib/extensions/gateways/stripe";
 import { paypalGateway } from "@/lib/extensions/gateways/paypal";
 import { mollieGateway } from "@/lib/extensions/gateways/mollie";
@@ -56,6 +61,7 @@ import { goGetSslResale } from "@/lib/extensions/resale/gogetssl";
 import { licenseResale } from "@/lib/extensions/resale/licenses";
 import { microsoft365Resale } from "@/lib/extensions/resale/microsoft365";
 import { googleWorkspaceResale } from "@/lib/extensions/resale/google-workspace";
+import { anthropicAi } from "@/lib/extensions/ai/anthropic";
 
 export const GATEWAY_DRIVERS: GatewayDriver[] = [
   stripeGateway,
@@ -133,6 +139,12 @@ export function getResaleDriver(slug: string): ResaleDriver | undefined {
   return RESALE_DRIVERS.find((d) => d.slug === slug);
 }
 
+export const AI_DRIVERS: AiDriver[] = [anthropicAi];
+
+export function getAiDriver(slug: string): AiDriver | undefined {
+  return AI_DRIVERS.find((d) => d.slug === slug);
+}
+
 // Ensure every known driver has an Extension row so it can be configured.
 export async function syncExtensions() {
   for (const driver of GATEWAY_DRIVERS) {
@@ -154,6 +166,13 @@ export async function syncExtensions() {
       where: { slug: driver.slug },
       update: {},
       create: { slug: driver.slug, name: driver.name, type: "RESALE" },
+    });
+  }
+  for (const driver of AI_DRIVERS) {
+    await db.extension.upsert({
+      where: { slug: driver.slug },
+      update: {},
+      create: { slug: driver.slug, name: driver.name, type: "AI" },
     });
   }
 }

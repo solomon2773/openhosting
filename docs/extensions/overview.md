@@ -2,13 +2,14 @@
 
 Integrations in OpenHosting are **drivers** — self-contained TypeScript objects
 that implement a small interface and are registered in one place. There are
-three kinds:
+four kinds:
 
 | Kind | Interface | Purpose |
 |---|---|---|
 | **Payment gateway** | `GatewayDriver` | Take payment for invoices |
 | **Server module** | `ServerDriver` | Provision servers/accounts |
 | **Resale module** | `ResaleDriver` | Register domains, issue SSL, provision seats |
+| **AI provider** | `AiDriver` | Answer prompts for the [AI support features](../guides/ai-support.md) on your own API key |
 
 ## How they're configured
 

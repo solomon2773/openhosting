@@ -23,6 +23,12 @@ Opening a ticket lets you:
 - **Change status** — open, answered, customer reply, closed
 - **Assign** — hand the ticket to a specific staff member
 
+## AI assistance
+
+Staff can have a reply drafted from your published knowledgebase, and new tickets
+can be classified into a department and priority automatically. Both are off by
+default and need your own model API key — see [AI support](ai-support.md).
+
 ## Statuses
 
 | Status | Meaning |

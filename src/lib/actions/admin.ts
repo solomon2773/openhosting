@@ -558,3 +558,32 @@ export async function saveEmailTemplate(
   revalidatePath("/admin/email-templates");
   return { success: "Template saved." };
 }
+
+// ── AI support ──────────────────────────────────────────────────────────────
+
+// Drafts a reply for staff to review. The draft is returned to the browser and
+// dropped into the reply box — it is never posted to the ticket from here.
+export async function draftTicketReplyAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const admin = await requireAdmin("tickets");
+  const ticketId = str(formData, "ticketId");
+  const { draftTicketReply } = await import("@/lib/services/ai");
+  try {
+    const draft = await draftTicketReply(ticketId);
+    if (!draft) {
+      return { error: "AI reply drafts are not enabled for this installation." };
+    }
+    await audit("admin.ai_reply_drafted", {
+      userId: admin.id,
+      targetType: "ticket",
+      targetId: ticketId,
+    });
+    return { success: draft };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "Could not draft a reply.",
+    };
+  }
+}

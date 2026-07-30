@@ -6,7 +6,9 @@ customers, and AI does the support work — all on open standards (MCP, ACP,
 x402) with scoped-permission safety, bring-your-own model keys, and
 human-in-the-loop defaults.
 
-**Foundations already shipped:** the [MCP server](mcp.md) (21 tools), the
+**Foundations already shipped:** [AI support](guides/ai-support.md) — staff-reviewed
+reply drafts grounded in your knowledgebase, and ticket classification, both on
+your own API key — the [MCP server](mcp.md) (21 tools), the
 scoped [REST API](api/rest-api.md), an [OAuth2 provider](api/oauth.md),
 [usage-metered billing](guides/metered-billing.md), the
 [knowledgebase](guides/knowledgebase.md), the
@@ -17,13 +19,14 @@ Interested in any of these? Comment on the tracking issues or open a
 [discussion](https://github.com/solomon2773/openhosting/discussions) —
 contributions and design feedback shape the ordering.
 
-## Phase 1 — "AI runs your support" (target v0.4)
+## Phase 1 — "AI runs your support" (in progress, v0.6)
 
-1. **AI support agent** — knowledgebase-grounded answers to tickets:
-   auto-drafted replies for staff review (the default), optional auto-resolve
-   for tier-1 questions with confidence thresholds, and auto-triage
-   (department/priority) on ticket creation. Bring-your-own LLM key
-   (Anthropic first), per-feature toggles. Industry benchmarks put AI-first
+1. **AI support agent** — knowledgebase-grounded answers to tickets.
+   **Shipped:** auto-drafted replies for staff review and auto-triage
+   (department/priority) on ticket creation, on a bring-your-own Anthropic key
+   with per-feature toggles — see [AI support](guides/ai-support.md).
+   **Still to come:** optional auto-resolve for tier-1 questions behind a
+   confidence threshold, and additional providers. Industry benchmarks put AI-first
    support at 60–80% deflection at a fraction of human cost — for
    ticket-heavy, thin-margin hosting businesses this is the single biggest
    cost lever.
@@ -37,7 +40,7 @@ contributions and design feedback shape the ordering.
 4. **`llms.txt` + AI-readable docs** — so AI assistants answer OpenHosting
    questions accurately.
 
-## Phase 2 — "AI agents as customers" (target v0.5)
+## Phase 2 — "AI agents as customers" (v0.7+)
 
 5. **Agent checkout API** — a first-class machine purchase flow:
    machine-readable catalog feed, idempotent order placement, delegated
@@ -55,7 +58,7 @@ contributions and design feedback shape the ordering.
    quote for X", "why did this provisioning job fail?") with confirmation on
    every write action.
 
-## Phase 3 — "AI in the engine room" (v0.6+)
+## Phase 3 — "AI in the engine room" (later)
 
 9. **Revenue & risk intelligence** — churn-risk scoring, usage-anomaly
    detection, LLM-written weekly business summaries; the fraud review queue

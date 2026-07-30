@@ -108,6 +108,32 @@ export interface ResaleDriver {
   cancel(service: Service, config: Record<string, string>): Promise<void>;
 }
 
+export type AiMessage = { role: "user" | "assistant"; content: string };
+
+export type AiRequest = {
+  // Frames the task and the tone; never customer-supplied.
+  system: string;
+  messages: AiMessage[];
+  maxTokens?: number;
+};
+
+// A large-language-model provider, configured with the operator's own API key.
+// Drivers only turn a prompt into text — what to ask, and what to do with the
+// answer, belongs to src/lib/services/ai.ts.
+export interface AiDriver {
+  slug: string;
+  name: string;
+  configFields: ConfigField[];
+  complete(config: Record<string, string>, request: AiRequest): Promise<string>;
+  // Optional: answer as JSON matching `schema`. Drivers without native support
+  // for constrained output simply omit this, and callers fall back to `complete`
+  // (interface segregation, as with the gateways' stored-method methods).
+  completeJson?(
+    config: Record<string, string>,
+    request: AiRequest & { schema: Record<string, unknown> },
+  ): Promise<unknown>;
+}
+
 export function extensionConfig(ext: Extension): Record<string, string> {
   return (ext.config ?? {}) as Record<string, string>;
 }

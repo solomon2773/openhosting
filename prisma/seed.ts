@@ -342,6 +342,7 @@ async function main() {
     { slug: "software-license", name: "Software license (cPanel / LiteSpeed / Softaculous)", type: "RESALE" as const },
     { slug: "microsoft365", name: "Microsoft 365 (seats)", type: "RESALE" as const },
     { slug: "google-workspace", name: "Google Workspace (seats)", type: "RESALE" as const },
+    { slug: "anthropic", name: "Anthropic (Claude)", type: "AI" as const },
   ];
   for (const driver of drivers) {
     await db.extension.upsert({

@@ -52,6 +52,18 @@ See [Billing automation](../billing/automation.md) for how these drive the cron.
 
 Both are covered in [Accounts & security](../guides/accounts-security.md#sign-in-throttling).
 
+### AI support
+
+| Setting | Purpose |
+|---|---|
+| AI reply drafts on tickets | Adds a **Draft with AI** button to the staff reply box; drafts are never sent automatically |
+| Draft sign-off | Appended verbatim to drafts |
+| Classify new tickets | Sets department and priority from the ticket's content when it is created |
+| Minimum triage confidence | Below this the customer's own choices are kept (0-1) |
+
+Needs an enabled AI provider extension with your own API key — see
+[AI support](../guides/ai-support.md).
+
 ### Fraud
 
 Order review, ban lists, velocity limits, risk scoring and EU VAT — documented

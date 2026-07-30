@@ -616,6 +616,7 @@ enum ExtensionType {
   GATEWAY
   SERVER
   RESALE
+  AI
 }
 
 // Installed integration: payment gateway or server-provisioning backend.

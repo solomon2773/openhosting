@@ -2,6 +2,7 @@ import { formatDateTime } from "@/lib/format";
 import { getT } from "@/lib/i18n";
 import { closeTicket, replyTicket } from "@/lib/actions/client";
 import { ActionForm, SubmitButton } from "@/components/forms";
+import { AiReplyForm } from "@/components/ai-reply-form";
 import type { Ticket, TicketMessage, User } from "@/generated/prisma/client";
 
 type Attachment = { id: string; filename: string; size: number };
@@ -16,9 +17,12 @@ type ThreadTicket = Ticket & {
 export async function TicketThread({
   ticket,
   viewerId,
+  // Staff-only: offer an AI-written draft for the reply box.
+  aiDraft = false,
 }: {
   ticket: ThreadTicket;
   viewerId: string;
+  aiDraft?: boolean;
 }) {
   const t = await getT();
   return (
@@ -76,9 +80,16 @@ export async function TicketThread({
       {ticket.status !== "CLOSED" ? (
         <div className="card p-5">
           <h2 className="mb-3 font-semibold">{t("ticket.reply")}</h2>
+          {aiDraft ? (
+            <AiReplyForm
+              ticketId={ticket.id}
+              labels={{ attachments: t("ticket.attachments"), send: t("ticket.sendReply") }}
+            />
+          ) : (
           <ActionForm action={replyTicket}>
             <input type="hidden" name="ticketId" value={ticket.id} />
             <textarea
+              id="ticket-reply-body"
               name="message"
               rows={4}
               required
@@ -101,6 +112,7 @@ export async function TicketThread({
               <SubmitButton className="btn-primary">{t("ticket.sendReply")}</SubmitButton>
             </div>
           </ActionForm>
+          )}
           <ActionForm action={closeTicket} className="mt-3">
             <input type="hidden" name="ticketId" value={ticket.id} />
             <button

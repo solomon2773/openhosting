@@ -27,6 +27,7 @@ then follow [Installation](getting-started/installation.md).
 - [Coupons & taxes](guides/coupons-taxes.md) — discounts and tax rates
 - [Currencies](guides/currencies.md) — multi-currency pricing
 - [Support tickets](guides/tickets.md) — departments, priorities, attachments
+- [AI support](guides/ai-support.md) — staff-reviewed reply drafts and ticket classification, on your own API key
 - [Knowledgebase](guides/knowledgebase.md) — self-service help articles
 - [Notifications](guides/notifications.md) — in-app + email, per-user preferences
 - [Affiliate program](guides/affiliates.md) — referrals and commissions

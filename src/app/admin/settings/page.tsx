@@ -81,6 +81,33 @@ const SECTIONS: Array<{
     ],
   },
   {
+    heading: "AI support",
+    fields: [
+      {
+        key: "ai_reply_drafts",
+        label: "AI reply drafts on tickets",
+        type: "checkbox",
+        help: "Adds a Draft with AI button for staff. Drafts are never sent automatically.",
+      },
+      {
+        key: "ai_reply_signature",
+        label: "Draft sign-off (optional)",
+        help: 'Appended verbatim, e.g. "— The support team".',
+      },
+      {
+        key: "ai_auto_triage",
+        label: "Classify new tickets (department and priority)",
+        type: "checkbox",
+      },
+      {
+        key: "ai_triage_min_confidence",
+        label: "Minimum triage confidence (0-1)",
+        type: "text",
+        help: "Below this the customer's own choices are kept.",
+      },
+    ],
+  },
+  {
     heading: "Fraud",
     fields: [
       { key: "fraud_review_all", label: "Manually review every order", type: "checkbox" },

@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { StatusBadge } from "@/components/status-badge";
 import { TicketThread } from "@/components/ticket-thread";
 import { adminUpdateTicket } from "@/lib/actions/admin";
+import { aiReplyDraftsEnabled } from "@/lib/services/ai";
 
 export default async function AdminTicketDetailPage({
   params,
@@ -83,7 +84,11 @@ export default async function AdminTicketDetailPage({
         </button>
       </form>
 
-      <TicketThread ticket={ticket} viewerId={admin.id} />
+      <TicketThread
+        ticket={ticket}
+        viewerId={admin.id}
+        aiDraft={await aiReplyDraftsEnabled()}
+      />
     </div>
   );
 }

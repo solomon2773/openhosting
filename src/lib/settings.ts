@@ -28,6 +28,15 @@ export const SETTING_DEFAULTS: Record<string, string> = {
   login_lockout_minutes: "15",
   // staff (anyone with a role) must have 2FA on to reach the admin panel
   require_staff_2fa: "false",
+  // ── AI support (needs an enabled AI extension with your own API key) ──
+  // staff-reviewed reply drafts on tickets; nothing is ever sent automatically
+  ai_reply_drafts: "false",
+  // optional sign-off appended to drafts, e.g. "— The Acme support team"
+  ai_reply_signature: "",
+  // classify department/priority when a ticket is created
+  ai_auto_triage: "false",
+  // below this confidence the customer's own choices are left alone (0-1)
+  ai_triage_min_confidence: "0.7",
   // ── Fraud prevention ──
   fraud_review_all: "false",
   // external risk score (0-99) at or above which orders go to manual review

@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
+  AI_DRIVERS,
   GATEWAY_DRIVERS,
   SERVER_DRIVERS,
   RESALE_DRIVERS,
@@ -57,7 +58,7 @@ export default async function AdminExtensionsPage() {
   await requireAdmin("extensions");
   await syncExtensions();
   const extensions = await db.extension.findMany({ orderBy: { name: "asc" } });
-  const drivers = [...GATEWAY_DRIVERS, ...SERVER_DRIVERS, ...RESALE_DRIVERS];
+  const drivers = [...GATEWAY_DRIVERS, ...SERVER_DRIVERS, ...RESALE_DRIVERS, ...AI_DRIVERS];
 
   return (
     <div>
@@ -77,7 +78,13 @@ export default async function AdminExtensionsPage() {
                 <div>
                   <h2 className="font-semibold">{ext.name}</h2>
                   <p className="text-xs text-slate-400 uppercase">
-                    {ext.type === "GATEWAY" ? "Payment gateway" : ext.type === "SERVER" ? "Server integration" : "Product resale"}
+                    {ext.type === "GATEWAY"
+                      ? "Payment gateway"
+                      : ext.type === "SERVER"
+                        ? "Server integration"
+                        : ext.type === "AI"
+                          ? "AI provider"
+                          : "Product resale"}
                   </p>
                 </div>
                 <span
