@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { formatDate } from "@/lib/format";
 import { createOauthClient, deleteOauthClient } from "@/lib/actions/oauth";
 import { ActionForm, SubmitButton } from "@/components/forms";
+import { MCP_TOOL_SCOPES } from "@/lib/oauth-policy";
 
 export const metadata = { title: "OAuth clients" };
 
@@ -29,6 +30,7 @@ export default async function AdminOauthClientsPage() {
               <tr>
                 <th>Name</th>
                 <th>Client ID</th>
+                <th>Type</th>
                 <th>Tokens</th>
                 <th>Created</th>
                 <th></th>
@@ -43,6 +45,7 @@ export default async function AdminOauthClientsPage() {
                       {client.clientId}
                     </code>
                   </td>
+                  <td>{client.publicClient ? "Public PKCE" : "Confidential"}</td>
                   <td>{client._count.tokens}</td>
                   <td>{formatDate(client.createdAt)}</td>
                   <td className="text-right">
@@ -60,7 +63,7 @@ export default async function AdminOauthClientsPage() {
               ))}
               {clients.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-slate-400">
+                  <td colSpan={6} className="py-8 text-center text-slate-400">
                     No OAuth clients yet.
                   </td>
                 </tr>
@@ -75,6 +78,31 @@ export default async function AdminOauthClientsPage() {
             <div>
               <label className="label">Application name</label>
               <input name="name" required className="input" />
+            </div>
+            <label className="flex items-start gap-2 text-sm">
+              <input name="publicClient" type="checkbox" className="mt-1" />
+              <span>
+                Public PKCE client (no secret)
+                <span className="block text-xs text-slate-500">
+                  Use for installed, browser, and general-purpose MCP clients.
+                </span>
+              </span>
+            </label>
+            <div>
+              <label className="label">Allowed scopes (space-separated)</label>
+              <textarea
+                name="allowedScopes"
+                rows={7}
+                required
+                className="input font-mono text-xs"
+                defaultValue="openid profile email"
+              />
+              <details className="mt-2 text-xs text-slate-500">
+                <summary className="cursor-pointer">Available MCP tool scopes</summary>
+                <code className="mt-2 block whitespace-pre-wrap">
+                  {MCP_TOOL_SCOPES.join(" ")}
+                </code>
+              </details>
             </div>
             <div>
               <label className="label">Redirect URIs (one per line)</label>
