@@ -40,6 +40,9 @@ export const SETTING_DEFAULTS: Record<string, string> = {
   // close a new tier-1 ticket only when the model cites published KB articles
   ai_auto_resolve: "false",
   ai_auto_resolve_min_confidence: "0.92",
+  // read-only knowledgebase + account assistant in the client area
+  ai_customer_assistant: "false",
+  ai_customer_assistant_hourly_limit: "20",
   // ── Fraud prevention ──
   fraud_review_all: "false",
   // external risk score (0-99) at or above which orders go to manual review

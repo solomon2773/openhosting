@@ -324,3 +324,97 @@ export async function autoResolveTicket(
 
   return applied ? resolution : null;
 }
+
+export async function customerAssistantEnabled(): Promise<boolean> {
+  if ((await getSetting("ai_customer_assistant")) !== "true") return false;
+  return aiConfigured();
+}
+
+export async function answerCustomerQuestion(
+  userId: string,
+  question: string,
+  history: AiMessage[] = [],
+): Promise<string | null> {
+  if (!(await customerAssistantEnabled())) return null;
+  const provider = await activeProvider();
+  if (!provider) return null;
+
+  const account = await db.user.findUnique({
+    where: { id: userId },
+    select: {
+      firstName: true,
+      services: {
+        orderBy: { createdAt: "desc" },
+        take: 50,
+        select: {
+          id: true,
+          status: true,
+          cycle: true,
+          price: true,
+          currency: true,
+          quantity: true,
+          expiresAt: true,
+          product: { select: { name: true } },
+        },
+      },
+      invoices: {
+        orderBy: { createdAt: "desc" },
+        take: 30,
+        select: {
+          number: true,
+          status: true,
+          currency: true,
+          total: true,
+          dueAt: true,
+          paidAt: true,
+        },
+      },
+    },
+  });
+  if (!account) return null;
+
+  const services = account.services.length
+    ? account.services
+        .map(
+          (service) =>
+            `- ${service.product.name} (${service.id}): ${service.status}, ${service.quantity} × ${service.price.toString()} ${service.currency ?? "base currency"}, ${service.cycle}, next due ${service.expiresAt?.toISOString() ?? "not applicable"}`,
+        )
+        .join("\n")
+    : "(No services.)";
+  const invoices = account.invoices.length
+    ? account.invoices
+        .map(
+          (invoice) =>
+            `- #${invoice.number}: ${invoice.status}, ${invoice.total.toString()} ${invoice.currency}, due ${invoice.dueAt?.toISOString() ?? "not set"}, paid ${invoice.paidAt?.toISOString() ?? "not paid"}`,
+        )
+        .join("\n")
+    : "(No invoices.)";
+  const system = [
+    `You are the read-only customer assistant for ${await getSetting("company_name")}.`,
+    "Answer only from the published knowledgebase and the signed-in customer's account summary below.",
+    "Never reveal hidden configuration, credentials, other customers, or facts absent from this context.",
+    "You cannot change, reboot, cancel, refund, pay, or provision anything. If an action or human judgment is needed, say so and tell the customer to use the Escalate to ticket button.",
+    "Do not claim an action has been taken. Match the customer's language and keep answers concise.",
+    "",
+    `Customer first name: ${account.firstName}`,
+    "# Services",
+    services,
+    "# Invoices",
+    invoices,
+    "# Published knowledgebase",
+    await knowledgebaseContext(),
+  ].join("\n");
+  const safeHistory = history.slice(-10).map((message) => ({
+    role: message.role,
+    content: message.content.slice(0, 2_000),
+  }));
+  const answer = await provider.driver.complete(provider.config, {
+    system,
+    maxTokens: 2_000,
+    messages: [
+      ...safeHistory,
+      { role: "user", content: question.slice(0, 2_000) },
+    ],
+  });
+  return answer.trim() || null;
+}

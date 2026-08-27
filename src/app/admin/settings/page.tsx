@@ -117,6 +117,18 @@ const SECTIONS: Array<{
         type: "text",
         help: "Defaults to 0.92. Lower thresholds increase the risk of an incorrect automatic answer.",
       },
+      {
+        key: "ai_customer_assistant",
+        label: "Read-only customer assistant",
+        type: "checkbox",
+        help: "Lets signed-in customers ask about published documentation and their own services or invoices.",
+      },
+      {
+        key: "ai_customer_assistant_hourly_limit",
+        label: "Customer assistant questions per hour",
+        type: "number",
+        help: "Per account. Set to 0 to disable customer requests even when the assistant is enabled.",
+      },
     ],
   },
   {
