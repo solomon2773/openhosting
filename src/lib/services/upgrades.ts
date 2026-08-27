@@ -1,6 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
-import { CYCLE_MONTHS } from "@/lib/format";
+import { calculateProratedUpgradeCharge } from "@/lib/billing-policy";
 import { getEnabledCurrencies } from "@/lib/services/currency";
 import { getSetting } from "@/lib/settings";
 
@@ -35,6 +35,7 @@ async function toServiceCurrency(
 
 export async function upgradeOptionsForService(
   serviceId: string,
+  now = new Date(),
 ): Promise<UpgradeOption[]> {
   const service = await db.service.findUnique({
     where: { id: serviceId },
@@ -51,22 +52,17 @@ export async function upgradeOptionsForService(
       service.currency,
     );
 
-    // remaining fraction of the current billing period
-    let fraction = 0;
-    if (service.expiresAt && service.cycle !== "ONE_TIME") {
-      const cycleDays = CYCLE_MONTHS[service.cycle] * 30.44;
-      const remainingDays = Math.max(
-        0,
-        (service.expiresAt.getTime() - Date.now()) / 86_400_000,
-      );
-      fraction = Math.min(1, remainingDays / cycleDays);
-    }
-    const difference = newPrice - Number(service.price);
     options.push({
       toProductId: path.toProductId,
       toProductName: path.toProduct.name,
       newPrice,
-      proratedCharge: difference > 0 ? round2(difference * fraction) : 0,
+      proratedCharge: calculateProratedUpgradeCharge({
+        currentPrice: Number(service.price),
+        newPrice,
+        expiresAt: service.expiresAt,
+        cycle: service.cycle,
+        now,
+      }),
       currency: service.currency ?? (await getSetting("currency")),
     });
   }
