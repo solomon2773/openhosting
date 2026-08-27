@@ -7,10 +7,11 @@ x402) with scoped-permission safety, bring-your-own model keys, and
 human-in-the-loop defaults.
 
 **Foundations already shipped:** [AI support](guides/ai-support.md) — staff-reviewed
-reply drafts grounded in your knowledgebase, and ticket classification, both on
-your own API key — the [MCP server](mcp.md) (21 tools), the
+reply drafts, ticket classification, confidence-gated tier-1 resolution, and a
+read-only customer assistant, all on your own API key — the [MCP server](mcp.md) (21 tools), the
 scoped [REST API](api/rest-api.md), an [OAuth2 provider](api/oauth.md),
 [usage-metered billing](guides/metered-billing.md), the
+[delegated agent-commerce APIs](guides/agent-commerce.md), the
 [knowledgebase](guides/knowledgebase.md), the
 [fraud pipeline](guides/fraud.md), and the idempotent
 [billing cron](billing/automation.md).
@@ -25,18 +26,20 @@ contributions and design feedback shape the ordering.
    **Shipped:** auto-drafted replies for staff review and auto-triage
    (department/priority) on ticket creation, on a bring-your-own Anthropic key
    with per-feature toggles — see [AI support](guides/ai-support.md).
-   **Still to come:** optional auto-resolve for tier-1 questions behind a
-   confidence threshold, and additional providers. Industry benchmarks put AI-first
+   **Shipped:** optional auto-resolve for tier-1 questions behind source,
+   priority, race, and confidence gates. **Still to come:** additional providers.
+   Industry benchmarks put AI-first
    support at 60–80% deflection at a fraction of human cost — for
    ticket-heavy, thin-margin hosting businesses this is the single biggest
    cost lever.
-2. **Customer-facing assistant** — a scoped chat in the client area grounded
-   in the knowledgebase *plus the customer's own services and invoices*
-   (read-only), with an "escalate to ticket" handoff.
-3. **MCP v2: remote & trusted** — streamable-HTTP transport secured by the
+2. **Customer-facing assistant — shipped** — a scoped chat in the client area
+   grounded in the knowledgebase *plus the customer's own services and invoices*
+   (read-only), with an "escalate to ticket" handoff and per-account rate limit.
+3. **MCP v2: remote & trusted — shipped** — streamable-HTTP transport secured by the
    built-in OAuth provider so hosted AI clients connect without a local
-   install; per-key *tool-level* scoping in the admin UI; listing in the MCP
-   Registry.
+   install; per-key *tool-level* scoping in the admin UI; and discovery
+   metadata ready for registry submission. **Still to come:** publication in
+   the external MCP Registry.
 4. **`llms.txt` + AI-readable docs** — so AI assistants answer OpenHosting
    questions accurately.
 

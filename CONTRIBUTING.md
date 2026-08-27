@@ -30,7 +30,7 @@ Logins after seeding: `admin@example.com` / `admin12345` and
 ## Good first contributions
 
 - New payment gateways (Mollie, Coinbase Commerce, Razorpay, …) — see
-  [docs/extensions.md](docs/extensions.md), usually < 100 lines
+  [Writing an extension](docs/extensions/writing-extensions.md), usually < 100 lines
 - New server integrations (Proxmox, VirtFusion, cPanel/WHM, Plesk, CyberPanel)
 - Translations / i18n groundwork
 - Tests around the billing engine
