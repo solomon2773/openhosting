@@ -20,7 +20,8 @@
     "test": "vitest run --config vitest.config.mts",
     "test:watch": "vitest --config vitest.config.mts",
     "test:coverage": "vitest run --config vitest.config.mts --coverage",
-    "test:integration": "vitest run --config vitest.integration.config.mts"
+    "test:integration": "vitest run --config vitest.integration.config.mts",
+    "certify:server": "node --conditions=react-server --import tsx scripts/certify-server-driver.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

@@ -6,6 +6,11 @@ OpenHosting includes 27 server-provisioning integrations. Enable one under
 module creates the server; the billing lifecycle then suspends, unsuspends and
 terminates it automatically.
 
+The registry is contract-tested, but vendor APIs and deployed versions vary.
+Before production use, run the disposable-resource lifecycle described in
+[Server driver certification](server-certification.md) against your staging
+tenant.
+
 Config options with env keys (e.g. `MEMORY`, `CORES`, `DISK`, `DOMAIN`) let
 customers pick sizes at checkout — see [Products → config options](../guides/products.md#config-options).
 
@@ -115,4 +120,5 @@ see [Writing an extension](writing-extensions.md).
 
 > **Note:** the driver implementations follow each vendor's documented API. As
 > with any provisioning integration, validate against your actual panel version
-> in staging before relying on it in production.
+> in staging before relying on it in production. A bundled driver is not a claim
+> of live certification.
