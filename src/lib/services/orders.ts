@@ -1,8 +1,16 @@
 import "server-only";
 import type { BillingCycle } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
+import {
+  calculateOrderTotals,
+  isCouponAvailable,
+  roundAsset,
+  roundCurrency,
+} from "@/lib/billing-policy";
 import { CYCLE_MONTHS } from "@/lib/format";
 import { getSettings } from "@/lib/settings";
+
+type CheckoutCurrency = { code: string; rate: number; decimals?: number };
 
 // Order service: turns a cart into an order + invoice + pending services,
 // applying coupons and taxes. The only module that computes checkout math.
@@ -27,7 +35,7 @@ export type PricedLine = CartLine & {
 };
 
 function round(n: number): number {
-  return Math.round(n * 100) / 100;
+  return roundCurrency(n);
 }
 
 // Config option values store a monthly price; scale it to the chosen cycle.
@@ -82,14 +90,13 @@ export async function priceCart(lines: CartLine[]): Promise<PricedLine[]> {
   return priced;
 }
 
-export async function validateCoupon(code: string) {
+export async function validateCoupon(code: string, now = new Date()) {
   const coupon = await db.coupon.findUnique({
     where: { code },
     include: { products: { select: { id: true } } },
   });
   if (!coupon) return null;
-  if (coupon.expiresAt && coupon.expiresAt < new Date()) return null;
-  if (coupon.maxUses !== null && coupon.uses >= coupon.maxUses) return null;
+  if (!isCouponAvailable(coupon, now)) return null;
   return coupon;
 }
 
@@ -97,52 +104,43 @@ export async function computeTotals(
   lines: PricedLine[],
   couponCode: string | null,
   country: string | null,
-  currency?: { code: string; rate: number },
+  currency?: CheckoutCurrency,
   taxExempt = false,
 ) {
   // All math happens in base currency, then converts once at the end.
   const rate = currency?.rate ?? 1;
-  const subtotal = round(lines.reduce((sum, l) => sum + l.lineTotal, 0));
-
-  let discount = 0;
+  const decimals = currency?.decimals ?? 2;
   const coupon = couponCode ? await validateCoupon(couponCode) : null;
-  if (coupon) {
-    // A coupon restricted to products only discounts matching lines.
-    const restricted = coupon.products.map((p) => p.id);
-    const eligible =
-      restricted.length === 0
-        ? subtotal
-        : round(
-            lines
-              .filter((l) => restricted.includes(l.productId))
-              .reduce((sum, l) => sum + l.lineTotal, 0),
-          );
-    discount =
-      coupon.type === "PERCENT"
-        ? round((eligible * Number(coupon.value)) / 100)
-        : Math.min(round(Number(coupon.value)), eligible);
-  }
-
-  let tax = 0;
   const settings = await getSettings(["tax_enabled", "currency"]);
+  let taxRatePercent: number | null = null;
   if (settings.tax_enabled === "true" && !taxExempt) {
     const rates = await db.taxRate.findMany();
     const taxRate =
       rates.find((r) => r.country && r.country === country) ??
       rates.find((r) => !r.country);
-    if (taxRate) {
-      tax = round(((subtotal - discount) * Number(taxRate.rate)) / 100);
-    }
+    if (taxRate) taxRatePercent = Number(taxRate.rate);
   }
 
+  const totals = calculateOrderTotals(
+    lines,
+    coupon
+      ? {
+          type: coupon.type,
+          value: Number(coupon.value),
+          productIds: coupon.products.map((product) => product.id),
+        }
+      : null,
+    taxRatePercent,
+    rate,
+    decimals,
+  );
+
   return {
-    subtotal: round(subtotal * rate),
-    discount: round(discount * rate),
-    tax: round(tax * rate),
-    total: round((subtotal - discount + tax) * rate),
+    ...totals,
     coupon,
     currency: currency?.code ?? settings.currency,
     rate,
+    decimals,
   };
 }
 
@@ -159,7 +157,7 @@ export async function placeOrder(
   userId: string,
   lines: PricedLine[],
   couponCode: string | null,
-  currency?: { code: string; rate: number },
+  currency?: CheckoutCurrency,
   guard: OrderGuard = {},
 ) {
   if (lines.length === 0) throw new Error("Cart is empty");
@@ -172,6 +170,7 @@ export async function placeOrder(
     guard.taxExempt ?? false,
   );
   const rate = totals.rate;
+  const decimals = totals.decimals;
 
   return db.$transaction(async (tx) => {
     const order = await tx.order.create({
@@ -192,8 +191,8 @@ export async function placeOrder(
             productId: l.productId,
             cycle: l.cycle,
             quantity: l.quantity,
-            unitPrice: round(l.unitPrice * rate),
-            setupFee: round(l.setupFee * rate),
+            unitPrice: roundAsset(l.unitPrice * rate, decimals),
+            setupFee: roundAsset(l.setupFee * rate, decimals),
             config: l.config,
           })),
         },
@@ -215,7 +214,7 @@ export async function placeOrder(
             productId: l.productId,
             orderId: order.id,
             cycle: l.cycle,
-            price: round(l.unitPrice * rate),
+            price: roundAsset(l.unitPrice * rate, decimals),
             currency: totals.currency,
             quantity: l.quantity,
             config: l.config,
@@ -239,7 +238,7 @@ export async function placeOrder(
           create: lines.map((l, i) => ({
             description: `${l.name} (${l.cycle.toLowerCase().replace("_", "-")})`,
             quantity: l.quantity,
-            unitPrice: round(l.unitPrice * rate),
+            unitPrice: roundAsset(l.unitPrice * rate, decimals),
             serviceId: services[i].id,
           })),
         },

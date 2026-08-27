@@ -1,5 +1,9 @@
 import "server-only";
 import { db } from "@/lib/db";
+import {
+  lifecycleCutoff,
+  renewalInvoiceHorizon,
+} from "@/lib/billing-policy";
 import { addCycle, formatMoney, formatDate } from "@/lib/format";
 import { getSetting, getSettings, publicUrlForEmail } from "@/lib/settings";
 import { notifyUser } from "@/lib/services/notifications";
@@ -13,8 +17,6 @@ import {
 
 // Billing engine: invoice lifecycle and recurring billing. Provisioning is
 // delegated to src/lib/services/provisioning (never concrete drivers here).
-
-const DAY_MS = 86_400_000;
 
 const serviceInclude = {
   user: true,
@@ -49,6 +51,7 @@ export async function markInvoicePaid(
   invoiceId: string,
   gateway: string,
   transactionId?: string,
+  now = new Date(),
 ) {
   const invoice = await db.invoice.findUnique({
     where: { id: invoiceId },
@@ -62,13 +65,13 @@ export async function markInvoicePaid(
     : null;
   const held = order?.reviewStatus === "PENDING_REVIEW";
 
-  const now = new Date();
-  await db.$transaction([
-    db.invoice.update({
-      where: { id: invoice.id },
+  const claimed = await db.$transaction(async (tx) => {
+    const update = await tx.invoice.updateMany({
+      where: { id: invoice.id, status: "PENDING" },
       data: { status: "PAID", paidAt: now },
-    }),
-    db.payment.create({
+    });
+    if (update.count === 0) return false;
+    await tx.payment.create({
       data: {
         invoiceId: invoice.id,
         gateway,
@@ -77,16 +80,18 @@ export async function markInvoicePaid(
         status: "COMPLETED",
         transactionId,
       },
-    }),
-    ...(invoice.orderId
-      ? [
-          db.order.update({
-            where: { id: invoice.orderId },
-            data: { status: "PAID" },
-          }),
-        ]
-      : []),
-  ]);
+    });
+    if (invoice.orderId) {
+      await tx.order.update({
+        where: { id: invoice.orderId },
+        data: { status: "PAID" },
+      });
+    }
+    return true;
+  });
+  if (!claimed) {
+    return db.invoice.findUnique({ where: { id: invoice.id } });
+  }
 
   for (const item of invoice.items) {
     if (held) break;
@@ -151,7 +156,10 @@ export async function markInvoicePaid(
 }
 
 // Activates a fraud-approved order's services whose invoices are already paid.
-export async function activateApprovedOrder(orderId: string): Promise<void> {
+export async function activateApprovedOrder(
+  orderId: string,
+  now = new Date(),
+): Promise<void> {
   const services = await db.service.findMany({
     where: {
       orderId,
@@ -159,7 +167,6 @@ export async function activateApprovedOrder(orderId: string): Promise<void> {
       invoiceItems: { some: { invoice: { status: "PAID" } } },
     },
   });
-  const now = new Date();
   for (const service of services) {
     await db.service.update({
       where: { id: service.id },
@@ -175,15 +182,16 @@ export async function activateApprovedOrder(orderId: string): Promise<void> {
 
 // ── Recurring billing (called from the cron endpoint) ───────────────────────
 
-export async function generateRenewalInvoices(): Promise<number> {
+export async function generateRenewalInvoices(now = new Date()): Promise<number> {
   const settings = await getSettings([
     "invoice_days_before",
     "currency",
     "company_name",
   ]);
   const emailBaseUrl = await publicUrlForEmail();
-  const horizon = new Date(
-    Date.now() + Number(settings.invoice_days_before) * DAY_MS,
+  const horizon = renewalInvoiceHorizon(
+    now,
+    Number(settings.invoice_days_before),
   );
   const services = await db.service.findMany({
     where: {
@@ -262,19 +270,19 @@ export async function generateRenewalInvoices(): Promise<number> {
 
 // Executes customer-scheduled end-of-term cancellations once the paid
 // period is over.
-export async function cancelEndOfTermServices(): Promise<number> {
+export async function cancelEndOfTermServices(now = new Date()): Promise<number> {
   const services = await db.service.findMany({
     where: {
       status: "ACTIVE",
       cancelAtPeriodEnd: true,
-      expiresAt: { lte: new Date() },
+      expiresAt: { lte: now },
     },
     include: serviceInclude,
   });
   for (const service of services) {
     await db.service.update({
       where: { id: service.id },
-      data: { status: "CANCELLED", cancelledAt: new Date() },
+      data: { status: "CANCELLED", cancelledAt: now },
     });
     await provisionTerminate(service);
     const { resaleCancel } = await import("@/lib/services/resale");
@@ -283,9 +291,9 @@ export async function cancelEndOfTermServices(): Promise<number> {
   return services.length;
 }
 
-export async function suspendOverdueServices(): Promise<number> {
+export async function suspendOverdueServices(now = new Date()): Promise<number> {
   const graceDays = Number(await getSetting("suspend_days_after"));
-  const cutoff = new Date(Date.now() - graceDays * DAY_MS);
+  const cutoff = lifecycleCutoff(now, graceDays);
   const services = await db.service.findMany({
     where: {
       status: "ACTIVE",
@@ -297,7 +305,7 @@ export async function suspendOverdueServices(): Promise<number> {
   for (const service of services) {
     await db.service.update({
       where: { id: service.id },
-      data: { status: "SUSPENDED", suspendedAt: new Date() },
+      data: { status: "SUSPENDED", suspendedAt: now },
     });
     await provisionSuspend(service);
     await notifyUser(service.user, "service_suspended", {
@@ -313,9 +321,11 @@ export async function suspendOverdueServices(): Promise<number> {
   return services.length;
 }
 
-export async function cancelStaleSuspendedServices(): Promise<number> {
+export async function cancelStaleSuspendedServices(
+  now = new Date(),
+): Promise<number> {
   const cancelDays = Number(await getSetting("cancel_days_after"));
-  const cutoff = new Date(Date.now() - cancelDays * DAY_MS);
+  const cutoff = lifecycleCutoff(now, cancelDays);
   const services = await db.service.findMany({
     where: { status: "SUSPENDED", suspendedAt: { lte: cutoff } },
     include: serviceInclude,
@@ -323,10 +333,11 @@ export async function cancelStaleSuspendedServices(): Promise<number> {
   for (const service of services) {
     await db.service.update({
       where: { id: service.id },
-      data: { status: "CANCELLED", cancelledAt: new Date() },
+      data: { status: "CANCELLED", cancelledAt: now },
     });
     await provisionTerminate(service);
-    { const { resaleCancel } = await import("@/lib/services/resale"); await resaleCancel(service); }
+    const { resaleCancel } = await import("@/lib/services/resale");
+    await resaleCancel(service);
     // void any open invoices for this service
     await db.invoice.updateMany({
       where: { status: "PENDING", items: { some: { serviceId: service.id } } },

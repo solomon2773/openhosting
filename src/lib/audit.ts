@@ -11,7 +11,12 @@ export async function audit(
     metadata?: Record<string, unknown>;
   } = {},
 ) {
-  const hdrs = await headers().catch(() => null);
+  let hdrs: Awaited<ReturnType<typeof headers>> | null = null;
+  try {
+    hdrs = await headers();
+  } catch {
+    // Background jobs and integration tests have no Next.js request scope.
+  }
   await db.auditLog
     .create({
       data: {

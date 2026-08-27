@@ -1,5 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
+import { roundAsset } from "@/lib/billing-policy";
 
 // Usage service: records metered usage and rolls unbilled usage into invoices.
 
@@ -41,8 +42,12 @@ export async function consumeUnbilledUsage(serviceId: string): Promise<{
   if (records.length === 0) return null;
 
   const quantity = records.reduce((sum, r) => sum + Number(r.quantity), 0);
-  const amount =
-    Math.round(quantity * Number(service.product.meteredUnitPrice) * 100) / 100;
+  // Preserve sub-cent usage until it is converted into the service's locked
+  // charge currency. The invoice boundary applies that asset's precision.
+  const amount = roundAsset(
+    quantity * Number(service.product.meteredUnitPrice),
+    8,
+  );
 
   await db.usageRecord.updateMany({
     where: { id: { in: records.map((r) => r.id) } },
