@@ -13,6 +13,7 @@ currency and SMTP is configured in the admin panel instead — see
 | `SKIP_MIGRATIONS` | | `true` skips `prisma migrate deploy` in the container entrypoint (when migrations run elsewhere). |
 | `SEED_ADMIN_PASSWORD` | | Admin password used by `npm run db:seed`, applied only when the account is created. Defaults to `admin12345`. |
 | `SEED_ADMIN_EMAIL` | | Address of the admin account the seed creates. Defaults to `admin@example.com`; the installer writes the address you chose here so re-seeding never adds a second admin. |
+| `APP_URL` | | Public origin used by the seed on a fresh install. Runtime links use the **Admin → Settings → Public URL** value. |
 | `ATTACHMENT_STORAGE` | | `database` (default) or `s3` for new ticket attachments. Existing rows retain their original backend. |
 | `ATTACHMENT_S3_BUCKET` | S3 only | Private bucket used for attachments. |
 | `ATTACHMENT_S3_REGION` | S3 only | Bucket signing region. Defaults to `us-east-1`; R2 commonly uses `auto`. |
@@ -43,6 +44,7 @@ CRON_SECRET="change-me-openssl-rand-hex-32"
   platform's secret store in production — a Kubernetes `Secret`, Docker secrets,
   or your PaaS's environment configuration — not committed to git.
 - `.env` is git-ignored. Copy `.env.example` to start.
-- Gateway and provisioning credentials are **not** environment variables —
-  they're stored (encrypted at rest by your database) via the admin
-  [Extensions](../extensions/overview.md) UI.
+- Gateway, provisioning, resale, and AI credentials are **not** environment
+  variables — they're stored as extension configuration in PostgreSQL via the
+  [Extensions](../extensions/overview.md) UI. Protect the database and backups,
+  and enable storage encryption in your database platform.

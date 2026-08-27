@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-OpenHosting is an open-source billing and client-management platform for hosting providers: a single Next.js (App Router) app backed by PostgreSQL through Prisma 7. See ARCHITECTURE.md for the full design; the essentials are below.
+OpenHosting is an open-source billing and client-management platform for hosting providers: a single Next.js 16 (App Router) app backed by PostgreSQL through Prisma 7. See ARCHITECTURE.md for the full design; the essentials are below.
 
 ## Commands
 

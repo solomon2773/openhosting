@@ -2,12 +2,13 @@
 
 # 🚀 OpenHosting
 
-**Open-source billing & client management for hosting providers.**
-Storefront, recurring billing, provisioning and support — one modern stack: Next.js 16 · Prisma · PostgreSQL/Supabase · Docker · Kubernetes.
+**Open-source billing and client management for hosting providers.**<br />
+Storefront, recurring billing, provisioning, support, and agent-native commerce
+in one self-hosted application.
 
 [![CI](https://img.shields.io/badge/CI-GitHub_Actions-2088FF?logo=githubactions&logoColor=white)](.github/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Next.js 15](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](https://nextjs.org)
+[![Next.js 16](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org)
 [![Prisma](https://img.shields.io/badge/Prisma-PostgreSQL-2D3748?logo=prisma)](https://www.prisma.io)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
@@ -15,68 +16,694 @@ Storefront, recurring billing, provisioning and support — one modern stack: Ne
 
 </div>
 
----
+## Contents
 
-## Why OpenHosting?
+- [What OpenHosting includes](#what-openhosting-includes)
+- [Agent commerce, built in](#agent-commerce-built-in)
+- [Technology stack](#technology-stack)
+- [How the application is structured](#how-the-application-is-structured)
+- [Core business flows](#core-business-flows)
+- [Repository map](#repository-map)
+- [Local development](#local-development)
+- [Configuration](#configuration)
+- [Commands](#commands)
+- [APIs and automation](#apis-and-automation)
+- [Extension system](#extension-system)
+- [Database and data model](#database-and-data-model)
+- [Security model](#security-model)
+- [Testing and continuous integration](#testing-and-continuous-integration)
+- [Deployment](#deployment)
+- [Development conventions](#development-conventions)
+- [Documentation](#documentation)
 
-Selling game servers, VPS or web hosting means gluing together a store, recurring
-billing, provisioning and support. OpenHosting delivers that entire workflow as a
-single modern TypeScript app you can deploy anywhere a container runs — a VPS,
-any cloud, or a Kubernetes cluster — with Postgres or Supabase as the only
-dependency. No license fees, no legacy stack.
+## What is OpenHosting?
 
-## ✨ Features
+Hosting businesses usually have to connect a catalog, checkout, recurring
+billing, infrastructure provisioning, customer accounts, and support tooling.
+OpenHosting keeps those concerns in one TypeScript application backed by
+PostgreSQL. It can sell game servers, VPS and web hosting, as well as domains,
+SSL certificates, software licenses, and productivity-suite seats.
 
-**Store & checkout**
-- Product catalog with categories, stock control and visibility rules
-- Six billing cycles (one-time → biennially) with setup fees per cycle
-- Configurable options (RAM, disk, …) with per-option pricing that scales with the cycle
-- Cart, coupons (percent/fixed, per-product restrictions, limited uses, expiry) and country-aware tax rates
-- **Multi-currency**: exchange rates, storefront currency picker, orders locked to their currency
+The same catalog can serve human customers and autonomous buyers. Agents can
+discover products, receive bounded purchasing authority from an existing
+customer, create an order through a native API or ACP, and pay an exact USDC
+invoice through x402 without creating a second commerce or provisioning stack.
 
-**Billing engine**
-- Orders → invoices → services, fully automated
-- Automatic renewal invoicing, overdue suspension and termination (cron-driven)
-- 19 payment gateways: cards (Stripe, PayPal, Mollie, Square, Authorize.net, Braintree), crypto (Coinbase Commerce, NOWPayments, BTCPay, CoinGate), SEPA (GoCardless), merchant-of-record (Lemon Squeezy), and regional (Razorpay, Mercado Pago/PIX, Paystack, Flutterwave, Midtrans, Xendit)
-- Account credit balance, zero-total auto-activation, manual admin payments
+The application has four primary surfaces:
 
-**Provisioning**
-- 27 server integrations: game panels (Pterodactyl, Pelican, WISP, TCAdmin2), VPS/cloud (Proxmox, SolusVM, Convoy, VirtFusion, Virtualizor, Hetzner, DigitalOcean, Vultr, Linode), enterprise virt (OpenStack, OnApp, Virtuozzo, VMware vCloud) and web panels (cPanel/WHM, DirectAdmin, Plesk, Enhance, HestiaCP, CyberPanel, CWP, InterWorx, ISPConfig, Webmin/Virtualmin)
-- Automatic create / suspend / unsuspend / terminate on billing events
-- Config options map to environment variables on the provisioned server
+1. A public storefront and knowledgebase.
+2. An authenticated client area for services, invoices, tickets, quotes, and
+   account management.
+3. A permission-guarded administration panel.
+4. REST, OAuth2, CLI, and MCP interfaces for external automation.
 
-**Product resale** (beyond servers)
-- Domain registrars: Enom, ResellerClub, Namecheap, OpenSRS, Openprovider (register/renew)
-- SSL certificates (GoGetSSL), software licenses (cPanel/LiteSpeed/Softaculous/CloudLinux), and Microsoft 365 / Google Workspace seat resale
-- Customers enter the required details (domain, CSR, seat count) at checkout
+OpenHosting is self-hosted, has no license server, and ships as a standalone
+Next.js container with Docker Compose and Kubernetes deployment examples.
 
-**Client area**
-- Dashboard, services, invoices with online payment, account credit
-- Support tickets with departments, priorities and email notifications
-- Profile, password management and **TOTP two-factor auth** with QR enrolment
+## What OpenHosting includes
 
-**Fraud prevention**
-- Order review queue (hold risky orders before provisioning), ban lists (email/domain/IP/country), disposable-email blocking
-- Velocity limits, MaxMind minFraud & FraudLabs Pro scoring, checkout captcha, EU VAT (VIES) reverse charge
+### Storefront and catalog
 
-**Affiliate program**
-- Referral links, per-product or default commissions, one-time or recurring, payout threshold, affiliate & admin dashboards
+- Categories, products, visibility, optional sold-out status, and quantities.
+- One-time, monthly, quarterly, semi-annual, annual, and biennial pricing.
+- Per-cycle setup fees and priced configuration options such as RAM or disk.
+- Cookie-backed cart, coupons, country-specific tax rates, and EU VAT reverse
+  charge support.
+- Multiple currencies with configurable exchange rates; orders and services
+  retain the currency used at checkout.
+- Public announcements/blog posts and a searchable knowledgebase.
 
-**Admin panel**
-- Revenue dashboard, orders, invoices (mark paid / cancel), service lifecycle controls
-- Product, category, coupon, tax, user and role management (RBAC permissions)
-- Extension configuration UI, editable email templates, SMTP settings
-- Full audit log and searchable customer list
+### Orders and billing
 
-**Platform**
-- **6 built-in themes** switchable at runtime, plus a two-file recipe for custom ones
-- **Multi-language UI** (English, Dutch, French, German, Spanish) with a storefront language picker
-- REST API (`/api/v1`) with scoped API keys, plus a **CLI** (`oh`) and an **MCP server** for AI assistants
-- One-command importers to migrate from other billing panels
-- Email notifications via SMTP with templated, per-event messages
-- Docker image, docker-compose stack, Kubernetes manifests with HPA + CronJob
+- Checkout creates an order, invoice, invoice items, and pending services in a
+  database transaction.
+- Payment by account credits, a hosted gateway, an administrator, or a
+  zero-total order.
+- Automatic renewal invoices, metered usage line items, stored-payment
+  auto-charge, suspension, unsuspension, and termination.
+- Quotes that customers can accept into invoices and product upgrade paths.
+- Configurable cancellation at once or at the end of the paid period.
 
-## 📸 Screenshots
+### Integrations
+
+- **20 payment gateways**, including Stripe, x402/USDC, PayPal, Mollie, Square,
+  Authorize.net, Braintree, GoCardless, crypto processors, and regional
+  providers.
+- **27 server drivers** for game panels, VPS/cloud platforms, enterprise
+  virtualization, and web-hosting control panels.
+- **9 resale drivers** for domain registrars, SSL certificates, software
+  licenses, Microsoft 365, and Google Workspace.
+- An AI-provider driver for staff-reviewed support reply drafts, ticket triage,
+  source/confidence-gated tier-1 resolution, and a read-only customer assistant.
+  Every AI feature is disabled by default and independently opt-in.
+
+All integrations are disabled until configured, except the demonstration bank
+transfer method created by the development seed.
+
+### Customers, support, and administration
+
+- Customer dashboard, services, invoices, quotes, notifications, credits,
+  billing methods, affiliates, and profile management.
+- Support tickets with departments, priorities, assignment, email/in-app
+  notifications, and database-backed attachments.
+- Customer-managed additional contacts with notification and permission
+  metadata.
+- Registration, email verification, password reset, TOTP two-factor
+  authentication, login throttling, and optional mandatory staff 2FA.
+- Order fraud review, ban lists, disposable-email detection, velocity rules,
+  captcha, MaxMind minFraud, and FraudLabs Pro.
+- Roles and permissions, audit logs, editable email templates, SMTP delivery,
+  mass mail, currencies, themes, and localization.
+
+### Platform and automation
+
+- REST API with scoped API keys.
+- OAuth2 authorization-code provider and user-info endpoint.
+- Delegated agent purchasing with a machine-readable catalog, idempotent
+  checkout, product/currency allowlists, and spend-capped customer tokens.
+- ACP 2026-04-17 checkout sessions through Stripe Shared Payment Tokens and
+  x402 v2 exact USDC settlement for autonomous payments.
+- Zero-dependency Node.js CLI and an MCP server exposing the same management
+  operations to AI assistants.
+- WHMCS and Paymenter import scripts.
+- Six runtime-selectable themes and five included locales: English, Dutch,
+  French, German, and Spanish.
+
+## Agent commerce, built in
+
+> **Build the hosting product once. Sell it through the storefront, an AI
+> agent, or a machine-to-machine workflow using the same price, invoice,
+> fraud, payment, and provisioning engine.**
+
+OpenHosting treats autonomous purchasing as a first-class channel rather than
+an unscoped API key bolted onto checkout:
+
+- **AI-readable discovery.** `/.well-known/agent-commerce` advertises a public
+  catalog containing stable SKUs, billing cycles, configuration choices,
+  availability, metered pricing, currencies, precision, settlement networks,
+  and supported checkout protocols.
+- **Delegated purchasing authority.** A customer can issue an expiring agent
+  grant restricted to exact products and currencies, with both a maximum order
+  value and a cumulative spend ceiling. The bearer credential is displayed
+  once, stored only as a hash, auditable, and immediately revocable.
+- **Idempotent native checkout.** Agents can place orders through JSON without
+  risking duplicate infrastructure. OpenHosting reloads stock, prices, options,
+  coupons, tax, fraud policy, currency rates, and grant limits before creating
+  the normal order, service, and invoice records.
+- **Agentic Commerce Protocol.** The versioned ACP checkout-session adapter
+  supports cart creation, retrieval, updates, completion, and cancellation,
+  with delegated fiat payment through Stripe Shared Payment Tokens.
+- **USDC machine payments.** The x402 v2 gateway issues exact six-decimal USDC
+  requirements, binds signed payment terms to one invoice and URL, verifies and
+  settles through a configured facilitator, and prevents transaction replay.
+- **Metered autonomous infrastructure.** Usage records retain sub-cent
+  precision and settle in the service's locked currency, supporting
+  pay-per-request, pay-per-hour, bandwidth, storage, and compute resale models.
+- **One operational ledger.** Agent orders use the existing invoices, payment
+  records, fraud review, audit log, lifecycle automation, and provisioning
+  drivers. Operators do not reconcile a separate agent-commerce backend.
+
+```text
+agent discovers catalog
+  → customer grants bounded authority
+  → native checkout or ACP session
+  → fiat via Stripe SPT or USDC via x402
+  → normal OpenHosting invoice, service lifecycle, and provisioning
+```
+
+This foundation is designed for autonomous deployment assistants, AI
+infrastructure marketplaces, usage-based compute sellers, hosting resellers,
+and internal agents that purchase within a customer-approved budget. Anonymous
+autonomous account creation is intentionally later on the roadmap; current
+grants remain anchored to an existing customer and its identity, recovery,
+fraud, and compliance controls.
+
+See the [agent commerce guide](docs/guides/agent-commerce.md) for API examples,
+security boundaries, ACP requirements, and x402 deployment guidance.
+
+## Technology stack
+
+| Layer | Technology | Notes |
+|---|---|---|
+| Web application | Next.js 16 App Router, React 19 | Server Components render reads; Server Actions handle UI mutations |
+| Language | TypeScript 5.9 | Strict mode, `@/*` mapped to `src/*` |
+| Styling | Tailwind CSS 4 | Global component/theme rules live in `src/app/globals.css` |
+| Database | PostgreSQL 14+ | PostgreSQL 18 is used by the provided Compose stack |
+| Data access | Prisma 7 with `@prisma/adapter-pg` | Generated client is written to `src/generated/prisma` |
+| Validation | Zod 4 | Primarily used at API and form boundaries |
+| Authentication | Server-side sessions, bcrypt, Node crypto | Opaque 14-day sessions; TOTP is implemented locally |
+| Email | Nodemailer | SMTP settings and templates are stored in PostgreSQL |
+| Integrations | Driver interfaces and native `fetch` | Payment, provisioning, resale, and AI adapters |
+| Tooling | Node.js 24, npm, Playwright | Playwright currently generates documentation screenshots |
+| Deployment | Standalone Next.js output, Docker, Kubernetes | Runtime container applies migrations unless configured otherwise |
+
+## How the application is structured
+
+OpenHosting is a modular monolith. UI, API, billing policy, and integration
+drivers deploy together, while the code keeps domain orchestration separate
+from third-party protocols.
+
+```text
+Browser / API client / CLI / MCP client
+                  │
+                  ▼
+Next.js App Router
+├── Server Components ─────────────── read models and render HTML
+├── Server Actions ────────────────── authenticated UI mutations
+└── Route Handlers ────────────────── REST, OAuth, webhooks, cron, files
+                  │
+                  ▼
+src/lib
+├── services/ ─────────────────────── domain workflows and integration ports
+├── billing.ts ────────────────────── invoice and recurring-service policy
+├── auth.ts / api-auth.ts ─────────── session, RBAC, and API-key guards
+└── extensions/ ───────────────────── gateway/server/resale/AI drivers
+                  │
+                  ▼
+Prisma client ───────── PostgreSQL / Supabase
+```
+
+Every page is dynamically rendered because it depends on live settings,
+catalog data, or session state. `next build` therefore does not need a running
+database. Mutations are grouped by business domain under `src/lib/actions`,
+while reusable business operations live under `src/lib/services`.
+
+Important dependency boundaries:
+
+- UI code and route handlers call actions or services; they do not call a
+  concrete payment or provisioning driver.
+- `src/lib/services/payments.ts` is the payment-driver boundary.
+- `src/lib/services/provisioning.ts` is the server-driver boundary.
+- `src/lib/services/resale.ts` is the resale-driver boundary.
+- `src/lib/services/ai.ts` owns AI support policy and resolves the active AI
+  provider.
+- `src/lib/billing.ts` owns invoice state transitions and recurring billing,
+  but delegates external side effects through those services.
+- All Prisma access uses the singleton exported by `src/lib/db.ts`.
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for a shorter architectural tour and
+[AGENTS.md](AGENTS.md) for repository-specific coding guidance.
+
+## Core business flows
+
+### Checkout and first activation
+
+```text
+Product configurator
+  → cookie cart
+  → checkout captcha/fraud/VAT checks
+  → priceCart() + computeTotals()
+  → Order + OrderItems + pending Services + Invoice (one transaction)
+  → gateway / credits / manual / free payment
+  → markInvoicePaid()
+  → Service ACTIVE
+  → provision server and/or resale product
+  → notification, email, audit, affiliate commission
+```
+
+Orders sent to fraud review can be paid, but their services stay pending until
+an administrator approves the order. Provisioning failures are recorded in the
+audit log rather than undoing a received payment.
+
+### Renewal automation
+
+`POST /api/cron`, authenticated with `CRON_SECRET`, is intended to run hourly:
+
+```text
+generate renewal invoices
+  → add unbilled usage records
+  → auto-charge due invoices when a default stored method supports it
+  → execute end-of-term cancellations
+  → suspend overdue active services
+  → terminate services suspended past the configured window
+  → prune old failed-login attempts
+```
+
+The timing values are runtime settings:
+
+- `invoice_days_before` defaults to `7`.
+- `suspend_days_after` defaults to `2`.
+- `cancel_days_after` defaults to `14` days after suspension.
+
+Successful renewal payment extends the service from its current expiry date
+when possible and unsuspends it through the configured driver if necessary.
+
+### Request authentication
+
+- Browser sessions use the `oh_session` HTTP-only, `SameSite=Lax` cookie.
+- `requireUser()` protects customer pages and actions.
+- `requireAdmin(permission)` requires a staff role, the requested permission,
+  and staff 2FA when that setting is enabled.
+- REST requests use `Authorization: Bearer oh_…` API keys and per-route scopes.
+- The billing cron uses its own `CRON_SECRET` bearer token.
+- Gateway webhook authenticity is handled inside each gateway driver.
+
+## Repository map
+
+```text
+.
+├── src/
+│   ├── app/
+│   │   ├── (store)/            public store, cart, blog, knowledgebase
+│   │   ├── (auth)/             login, registration, reset, two-factor flow
+│   │   ├── dashboard/          authenticated customer area
+│   │   ├── admin/              staff administration area
+│   │   ├── api/v1/             scoped REST API
+│   │   ├── api/webhooks/       gateway callbacks
+│   │   ├── api/cron/           recurring billing tick
+│   │   └── oauth/              authorization-code token and user-info routes
+│   ├── components/             shared forms, status, locale/currency UI
+│   ├── generated/prisma/       generated and git-ignored Prisma client
+│   └── lib/
+│       ├── actions/            Server Actions organized by domain
+│       ├── services/           domain workflows and integration boundaries
+│       ├── extensions/         integration types, registry, and drivers
+│       ├── auth.ts             sessions, password hashing, RBAC, tokens
+│       ├── billing.ts          payment effects and recurring billing policy
+│       ├── db.ts               shared Prisma client
+│       ├── i18n.ts             locale dictionaries and translation helpers
+│       ├── mail.ts             SMTP and editable templates
+│       └── settings.ts         database settings with code defaults
+├── prisma/
+│   ├── schema.prisma           domain schema
+│   ├── migrations/             deployable SQL migration history
+│   ├── seed.ts                 idempotent development/install seed
+│   └── reset-admin.ts          account recovery utility
+├── cli/                        `oh` REST API client
+├── mcp/                        stdio MCP server
+├── scripts/                    importers and screenshot generation
+├── deploy/k8s/                 Kubernetes Deployment, HPA, Ingress, CronJob
+├── docs/                       operator, feature, integration, and API guides
+├── Dockerfile                  multi-stage standalone production image
+├── docker-compose.yml          PostgreSQL, app, and hourly cron services
+├── docker-entrypoint.sh        migrate-on-start behavior
+├── install.sh                  interactive installer and install manager
+└── next.config.ts              standalone build configuration
+```
+
+## Local development
+
+### Requirements
+
+- Node.js 24 or newer and npm.
+- PostgreSQL 14 or newer, or a Supabase PostgreSQL project.
+- Git.
+- Docker is optional, but is the quickest way to start a local database.
+
+### 1. Install dependencies and configure the environment
+
+```bash
+git clone https://github.com/solomon2773/openhosting.git
+cd openhosting
+npm ci
+cp .env.example .env
+```
+
+The default `.env.example` points to PostgreSQL on `localhost:5432` with the
+database, user, and password all set to `openhosting`.
+
+### 2. Start PostgreSQL
+
+Skip this step if `.env` points to an existing database.
+
+```bash
+docker run -d --name oh-db -p 5432:5432 \
+  -e POSTGRES_USER=openhosting \
+  -e POSTGRES_PASSWORD=openhosting \
+  -e POSTGRES_DB=openhosting \
+  postgres:18-alpine
+```
+
+### 3. Generate the client, initialize data, and run the app
+
+```bash
+npm run db:generate
+npm run db:push
+npm run db:seed
+npm run dev
+```
+
+Open <http://localhost:3000>.
+
+`db:push` is intended for local development. Use migrations for schema changes
+that will be committed, and `npm run db:migrate` in production.
+
+### Seeded accounts and data
+
+| Account | Email | Password |
+|---|---|---|
+| Administrator | `admin@example.com` | `admin12345` |
+| Demo customer | `demo@example.com` | `demo12345` |
+
+The seed is idempotent: it creates missing roles, users, demo catalog data,
+extensions, settings, templates, example billing activity, and knowledgebase
+articles without overwriting operator-modified records. Set
+`SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` before the first seed to choose
+different administrator credentials.
+
+Never keep the default administrator password on a reachable deployment.
+
+## Configuration
+
+OpenHosting intentionally separates deploy-time environment variables from
+runtime business settings.
+
+### Environment variables
+
+| Variable | Required | Purpose |
+|---|---:|---|
+| `DATABASE_URL` | Yes | Runtime PostgreSQL connection; use a pooled URL for Supabase |
+| `DIRECT_URL` | Yes | Direct connection used by Prisma migrations; may equal `DATABASE_URL` on plain PostgreSQL |
+| `CRON_SECRET` | Yes in production | Protects `POST /api/cron`; generate with `openssl rand -hex 32` |
+| `SHADOW_DATABASE_URL` | No | Separate shadow database used while creating migrations locally |
+| `SKIP_MIGRATIONS` | No | Set to `true` when the platform applies migrations outside each app container |
+| `SEED_ADMIN_EMAIL` | No | Initial seeded administrator email |
+| `SEED_ADMIN_PASSWORD` | No | Initial seeded administrator password |
+| `APP_URL` | No | Lets the seed replace the placeholder public URL on a fresh install |
+| `PORT` | No | Next.js listen port; defaults to `3000` |
+| `WHMCS_DB_URL` | No | Source MySQL DSN for the WHMCS importer |
+| `PAYMENTER_DB_URL` | No | Source MySQL DSN for the Paymenter importer |
+
+See the complete [environment reference](docs/getting-started/environment.md).
+
+### Runtime settings
+
+Company identity, public URL, base currency, themes, billing timing, taxes,
+registration, security controls, fraud providers, affiliate behavior, AI
+features, and SMTP are stored in the `Setting` table and edited under
+**Admin → Settings**. Extension credentials and product-specific driver values
+are edited under **Admin → Extensions** and **Admin → Products**.
+
+Set the public URL to the final HTTPS origin before enabling email or live
+payment gateways. Request-time links can infer an origin on a fresh install,
+but emailed links deliberately use only the configured public URL to prevent
+Host-header steering.
+
+## Commands
+
+| Command | Purpose |
+|---|---|
+| `npm run dev` | Run the development server with hot reload |
+| `npm run build` | Build the standalone production application |
+| `npm run start` | Start a previously built application |
+| `npm run typecheck` | Run strict TypeScript checking without emitting files |
+| `npm run db:generate` | Generate Prisma into `src/generated/prisma` |
+| `npm run db:push` | Synchronize the schema directly for local development |
+| `npm run db:migrate` | Apply committed migrations with `prisma migrate deploy` |
+| `npm run db:seed` | Run the idempotent seed |
+| `npm run db:reset-admin -- --list` | List staff accounts for recovery |
+| `npm run db:reset-admin -- --email … --password-stdin` | Reset a staff password without putting it in shell history |
+| `npm run import:whmcs` | Import supported records from a WHMCS MySQL database |
+| `npm run import:paymenter` | Import supported records from a Paymenter MySQL database |
+| `npm run cli -- <command>` | Run the `oh` CLI from the repository |
+| `npm run mcp` | Start the OpenHosting MCP server over stdio |
+| `npx tsx scripts/screenshots.ts` | Refresh README/docs screenshots from a running seeded app |
+
+For a schema change, create and inspect a migration rather than committing only
+the schema edit:
+
+```bash
+npx prisma migrate dev --name describe_the_change
+npm run db:generate
+```
+
+## APIs and automation
+
+### REST API
+
+The versioned API lives at `/api/v1`. API keys are created in **Admin → API
+keys**, their raw value is displayed once, and only a SHA-256 hash is stored.
+Routes are protected by scopes such as `users:read`, `services:write`, and
+`usage:write`.
+
+```bash
+curl -H "Authorization: Bearer $OPENHOSTING_API_KEY" \
+  https://billing.example.com/api/v1/services
+```
+
+Resources currently include users, products, categories, orders, invoices,
+services, metered usage, coupons, quotes, tickets, and knowledgebase search.
+See the [REST API reference](docs/api/rest-api.md) for methods, payloads,
+pagination, and scopes.
+
+### OAuth2
+
+OpenHosting can act as an OAuth2 authorization-code provider for other
+applications. Administrators create clients in the admin panel; authorization
+codes and access tokens are stored as hashes, redirect URIs are exact matched,
+and `/oauth/userinfo` returns the authenticated user's profile. See the
+[OAuth/SSO guide](docs/api/oauth.md).
+
+### CLI
+
+The zero-dependency `oh` CLI uses the REST API:
+
+```bash
+export OPENHOSTING_URL="https://billing.example.com"
+export OPENHOSTING_API_KEY="oh_…"
+npm run cli -- services list --status ACTIVE
+```
+
+It can also persist configuration under `~/.openhosting/config.json`. See the
+[CLI guide](docs/cli.md) before saving secrets on a shared workstation.
+
+### MCP server
+
+`mcp/server.mjs` exposes 21 typed tools over stdio for customers, catalog,
+orders, invoices, services, usage, coupons, quotes, support, knowledgebase, and
+the billing cron. It uses the same API-key scopes as the REST API. See the
+[MCP setup guide](docs/mcp.md).
+
+### Agent commerce
+
+Customers can create expiring, spend-capped purchasing grants under
+**Dashboard → Account → Agent access**. Agents discover the public catalog at
+`/api/agent/catalog`, place idempotent native orders, use ACP 2026-04-17 with a
+Stripe Shared Payment Token for fiat checkout, or settle a USDC invoice through
+the x402 v2 gateway. Start with the [agent commerce guide](docs/guides/agent-commerce.md);
+all protocol and payment integrations are disabled until explicitly configured.
+
+## Extension system
+
+Extension contracts live in `src/lib/extensions/types.ts`:
+
+| Driver | Required lifecycle | Optional capabilities |
+|---|---|---|
+| `GatewayDriver` | Start invoice payment | Webhook handling, stored-method setup, off-session charging |
+| `ServerDriver` | Create, suspend, unsuspend, terminate | Product-specific configuration fields |
+| `ResaleDriver` | Provision and cancel | Renew; checkout fields such as domain, CSR, or seat count |
+| `AiDriver` | Complete a text request | Schema-constrained JSON completion |
+
+Every driver declares its global and product configuration fields. The admin
+UI renders those definitions, and database `Extension` rows store enabled state
+and configuration. `src/lib/extensions/registry.ts` is the in-code registry;
+the admin layout synchronizes missing database rows so a newly shipped driver
+appears without a schema migration.
+
+To add an integration:
+
+1. Implement the appropriate interface in `gateways/`, `servers/`, `resale/`,
+   or `ai/`.
+2. Register it in `src/lib/extensions/registry.ts`.
+3. Keep the seed's extension inventory and the appropriate documentation page
+   in sync.
+4. Keep protocol handling inside the driver and business policy inside the
+   service layer.
+5. Run Prisma generation, type checking, and a production build.
+
+Read [Writing an extension](docs/extensions/writing-extensions.md) and the
+localized [extension guidance](src/lib/extensions/AGENTS.md) before starting.
+
+## Database and data model
+
+`prisma/schema.prisma` is grouped by domain. Major relationships are:
+
+```text
+User
+├── sessions, tokens, role, contacts, API keys, agent grants, payment methods
+├── orders ── order items ── products ── categories/prices/options
+├── services ── usage records
+├── invoices ── invoice items ── payments
+├── agent checkouts ── idempotent operations / x402 settlements
+├── tickets ── messages ── attachments
+├── quotes ── quote items
+└── affiliate, notifications, audit records
+
+Product
+├── server extension + product server config
+├── resale extension + product resale config
+└── upgrade paths, coupon eligibility, metered billing settings
+```
+
+Money uses PostgreSQL decimal columns. The base currency lives in settings;
+credit and affiliate balances use that base, while orders, invoices, payments,
+and services retain their transaction currency. Flexible integration and
+checkout configuration is stored as JSON.
+
+The generated Prisma client is intentionally outside `node_modules`, under
+`src/generated/prisma`, and is git-ignored. Import generated types from
+`@/generated/prisma/client`, never from `@prisma/client`.
+
+## Security model
+
+- Passwords use bcrypt; reset/verification tokens, API keys, OAuth secrets,
+  authorization codes, and OAuth access tokens are stored as hashes.
+- Browser sessions are opaque database records with a 14-day expiry and secure
+  cookies in production.
+- Admin access uses database roles and permission arrays; `*` grants every
+  permission.
+- Sensitive mutations should create an audit entry with actor, target, client
+  IP, and useful non-secret metadata.
+- Login throttling can enforce both per-account and per-IP budgets.
+- Gateway drivers are responsible for verifying their provider's webhook
+  signature before returning a payment result.
+- Ticket uploads allow at most three files per message, 5 MB each, from an
+  explicit MIME allowlist; attachment bytes are stored in PostgreSQL.
+- Integration configuration is application data in the database. Protect the
+  database, backups, admin accounts, and deployment secrets accordingly.
+
+For vulnerability reporting, see [SECURITY.md](SECURITY.md).
+
+## Testing and continuous integration
+
+There is currently no automated unit or end-to-end test suite. The CI workflow
+is the minimum merge gate and runs:
+
+1. `npm ci`.
+2. `npx prisma generate`.
+3. `npm run typecheck`.
+4. `npm run build`.
+5. A separate multi-stage Docker image build.
+
+Run at least the same typecheck and build locally before opening a pull request:
+
+```bash
+npm run db:generate
+npm run typecheck
+npm run build
+```
+
+For changes to billing, payments, authentication, migrations, or provisioning,
+also exercise the affected workflow against an isolated database. Playwright is
+present for deterministic screenshot capture, not yet as a behavioral test
+suite.
+
+## Deployment
+
+### One-line installer
+
+On a fresh Linux host, the installer can install Docker, generate secrets,
+choose a port, start and seed the stack, and optionally configure nginx with a
+Let's Encrypt certificate:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/solomon2773/openhosting/main/install.sh | bash
+```
+
+Re-running it offers upgrade, rebuild, admin recovery, reconfiguration,
+reinstall, and uninstall actions. Destructive actions ask for confirmation.
+See the [installer and Docker guide](docs/getting-started/docker.md).
+
+### Docker Compose
+
+The repository Compose stack contains PostgreSQL, the application, and an
+hourly curl-based cron service:
+
+```bash
+export DB_PASSWORD="$(openssl rand -hex 16)"
+export CRON_SECRET="$(openssl rand -hex 32)"
+docker compose up -d --build
+docker compose exec -e SEED_ADMIN_PASSWORD="a-strong-password" \
+  app node prisma/seed.mjs
+```
+
+The container entrypoint applies `prisma migrate deploy` before starting the
+server. Set `SKIP_MIGRATIONS=true` only when the deployment platform guarantees
+that migrations run separately.
+
+### Kubernetes
+
+`deploy/k8s` includes a namespace, secret example, two-replica Deployment,
+Service, nginx Ingress, HPA, and hourly billing CronJob. A Deployment init
+container applies migrations while app containers skip entrypoint migrations.
+Replace the example image, host, issuer, resources, and secrets for your cluster.
+See the [Kubernetes guide](docs/getting-started/kubernetes.md).
+
+### Other platforms
+
+Any platform that can run the standalone Node.js output and reach PostgreSQL
+can host the application. It must also invoke `POST /api/cron` on a schedule and
+forward the original host/protocol headers correctly behind a proxy. Supabase
+users should use the pooled URL for runtime access and the direct URL for
+migrations.
+
+## Development conventions
+
+- Keep Server Components focused on reads and rendering. Put UI mutations in a
+  domain Server Action and reusable business behavior in a service.
+- Authenticate and authorize again inside every mutation; hiding a button is
+  not an access-control boundary.
+- Preserve the driver/service dependency boundary. Billing and pages should not
+  import concrete drivers.
+- Use `db` from `src/lib/db.ts` and imports from the generated client path.
+- Add a committed migration for schema changes. Never edit or reorder an
+  already deployed migration.
+- Keep `prisma/seed.ts` idempotent because installers may run it again during an
+  update.
+- Prisma 7 standalone scripts must load `.env` explicitly when they need local
+  environment files; follow the pattern in the seed and importers.
+- Add translated keys to `src/lib/i18n.ts` for pages that already use `getT()`;
+  the English dictionary defines the valid key type.
+- Add an audit record for sensitive admin, account, billing, authentication, or
+  lifecycle mutations without logging secrets.
+- Update deployment examples and operator docs when environment variables,
+  startup behavior, or scheduled work changes.
+- Refresh generated screenshots after changing UI shown in this README.
+
+Repository-specific automation guidance is in [AGENTS.md](AGENTS.md), with
+additional scoped files only where the workflow differs materially.
+
+## Screenshots
 
 | Storefront | Product configurator | Cart |
 |---|---|---|
@@ -90,113 +717,30 @@ dependency. No license fees, no legacy stack.
 |---|---|---|
 | ![Admin](docs/screenshots/admin-dashboard.png) | ![Product editor](docs/screenshots/admin-product-edit.png) | ![Extensions](docs/screenshots/admin-extensions.png) |
 
-<details>
-<summary>More screenshots</summary>
+## Documentation
 
-| | |
-|---|---|
-| ![Category](docs/screenshots/storefront-category.png) | ![Login](docs/screenshots/auth-login.png) |
-| ![Services](docs/screenshots/client-services.png) | ![Account](docs/screenshots/client-account.png) |
-| ![Products](docs/screenshots/admin-products.png) | ![Invoices](docs/screenshots/admin-invoices.png) |
-| ![Admin ticket](docs/screenshots/admin-ticket.png) | ![Settings](docs/screenshots/admin-settings.png) |
+The complete operator and feature documentation starts at
+[docs/README.md](docs/README.md).
 
-</details>
-
-## 🚀 Quick start
-
-One command on a fresh Linux server — it installs Docker if needed, asks for
-your port, domain and admin login, generates secrets, starts the stack, seeds
-the account, and sets up nginx with a free HTTPS certificate for your domain:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/solomon2773/openhosting/main/install.sh | bash
-```
-
-Give it a domain when it asks (or pass `--domain billing.example.com`) and it
-comes up on `https://` with auto-renewing Let's Encrypt certificates — or leave
-it empty to serve plain HTTP until DNS is ready. If port 3000 is taken it offers
-the free ports next to it instead of failing halfway through.
-
-Run the same command again to manage that install: upgrade, rebuild, **reset
-the admin password**, change the port or domain, reinstall or uninstall. Every
-action is also a flag, so it scripts cleanly:
-
-```bash
-curl -fsSL …/install.sh | bash -s -- --upgrade          # unattended update
-curl -fsSL …/install.sh | bash -s -- --reset-password   # locked out
-```
-
-See the [installer reference](docs/getting-started/docker.md#one-line-install-recommended).
-
-<details>
-<summary>Manual Docker setup</summary>
-
-```bash
-git clone https://github.com/solomon2773/openhosting.git
-cd openhosting
-export DB_PASSWORD="$(openssl rand -hex 16)" CRON_SECRET="$(openssl rand -hex 32)"
-docker compose up -d --build
-docker compose exec -e SEED_ADMIN_PASSWORD="a-strong-password" app node prisma/seed.mjs
-```
-
-Open <http://localhost:3000> — admin login `admin@example.com` with the
-password you chose. See the [Docker guide](docs/getting-started/docker.md).
-
-</details>
-
-### Local development
-
-```bash
-npm install
-cp .env.example .env          # point DATABASE_URL at Postgres or Supabase
-npm run db:push && npm run db:seed
-npm run dev
-```
-
-## 📚 Documentation
-
-Full documentation lives in **[docs/](docs/README.md)** — start with the
-[Introduction](docs/getting-started/introduction.md). Highlights:
-
-| | | |
+| Getting started | Product and operations | Extending and automating |
 |---|---|---|
-| [Installation](docs/getting-started/installation.md) | [Docker](docs/getting-started/docker.md) | [Kubernetes](docs/getting-started/kubernetes.md) |
-| [Configuration](docs/getting-started/configuration.md) | [Products](docs/guides/products.md) | [Billing automation](docs/billing/automation.md) |
-| [Payment gateways](docs/extensions/payment-gateways.md) | [Server modules](docs/extensions/server-modules.md) | [Resale modules](docs/extensions/resale-modules.md) |
-| [Fraud protection](docs/guides/fraud.md) | [Affiliates](docs/guides/affiliates.md) | [Tickets](docs/guides/tickets.md) |
-| [REST API](docs/api/rest-api.md) | [OAuth / SSO](docs/api/oauth.md) | [Writing extensions](docs/extensions/writing-extensions.md) |
-| [Themes](docs/guides/themes.md) | [Migrations](docs/migrations.md) | [FAQ](docs/faq.md) |
-| [CLI](docs/cli.md) | [MCP server](docs/mcp.md) | [Roadmap](docs/roadmap.md) |
+| [Installation](docs/getting-started/installation.md) | [Products](docs/guides/products.md) | [Extensions overview](docs/extensions/overview.md) |
+| [Docker](docs/getting-started/docker.md) | [Orders and invoices](docs/guides/orders-invoices.md) | [Writing extensions](docs/extensions/writing-extensions.md) |
+| [Kubernetes](docs/getting-started/kubernetes.md) | [Billing automation](docs/billing/automation.md) | [REST API](docs/api/rest-api.md) |
+| [Supabase](docs/getting-started/supabase.md) | [Accounts and security](docs/guides/accounts-security.md) | [OAuth / SSO](docs/api/oauth.md) |
+| [Configuration](docs/getting-started/configuration.md) | [Fraud protection](docs/guides/fraud.md) | [CLI](docs/cli.md) |
+| [Environment](docs/getting-started/environment.md) | [Support tickets](docs/guides/tickets.md) | [MCP server](docs/mcp.md) |
 
-## 🏗 Architecture
+For architectural rationale, see [ARCHITECTURE.md](ARCHITECTURE.md). For setup
+problems and operational questions, see the [FAQ](docs/faq.md).
 
-OpenHosting is a single Next.js App Router application following SOLID
-principles: payment gateways and provisioning backends are substitutable
-drivers behind segregated interfaces, and the billing engine depends only on
-abstractions — adding an integration never touches core code. Read the full
-tour in [ARCHITECTURE.md](ARCHITECTURE.md).
+## Contributing
 
-```
-Next.js (App Router, Server Actions)
-├── Storefront  ├── Client area  ├── Admin panel  └── REST API /api/v1
-src/lib
-├── billing.ts            invoice lifecycle & recurring billing
-├── services/             orders, payments, provisioning (SOLID service layer)
-└── extensions/           GatewayDriver + ServerDriver implementations
-PostgreSQL / Supabase (Prisma)
-```
+Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md),
+the architecture notes, and the applicable `AGENTS.md` before changing code.
+The [good first issues](https://github.com/solomon2773/openhosting/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
+are intended to be narrowly scoped.
 
-## 🤝 Contributing & community
+## License
 
-PRs are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for the dev setup and
-how to add a payment gateway or server integration (usually < 100 lines).
-Check the [good first issues](https://github.com/solomon2773/openhosting/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
-for scoped starting points, or ask questions in
-[Discussions](https://github.com/solomon2773/openhosting/discussions).
-
-⭐ **If OpenHosting looks useful to you, a star helps other hosting
-providers find it.**
-
-## 📄 License
-
-[MIT](LICENSE) — free for commercial use.
+[MIT](LICENSE) — free for personal and commercial use.
