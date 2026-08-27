@@ -15,6 +15,37 @@
     "Helvetica Neue", Arial, sans-serif;
 }
 
+@theme inline {
+  --color-page: var(--surface-page);
+  --color-surface: var(--surface-panel);
+  --color-surface-muted: var(--surface-muted);
+  --color-foreground: var(--text-primary);
+  --color-muted: var(--text-muted);
+  --color-subtle: var(--border-subtle);
+}
+
+:root {
+  color-scheme: light;
+  --surface-page: #f8fafc;
+  --surface-panel: #ffffff;
+  --surface-muted: #f1f5f9;
+  --text-primary: #0f172a;
+  --text-muted: #64748b;
+  --border-subtle: #e2e8f0;
+  --focus-ring: color-mix(in srgb, var(--color-brand-500) 30%, transparent);
+}
+
+:root[data-color-mode="dark"] {
+  color-scheme: dark;
+  --surface-page: #070d19;
+  --surface-panel: #0f172a;
+  --surface-muted: #172033;
+  --text-primary: #f8fafc;
+  --text-muted: #94a3b8;
+  --border-subtle: #263449;
+  --focus-ring: color-mix(in srgb, var(--color-brand-400) 45%, transparent);
+}
+
 /* ── Themes ──────────────────────────────────────────────────────────────────
    Each block overrides the brand scale; selected via data-theme on <html>
    (Admin → Settings → Theme). Register new themes in src/lib/themes.ts. */
@@ -85,12 +116,15 @@
 }
 
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
+  @apply bg-page text-foreground antialiased;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
 }
 
 @layer components {
   .card {
-    @apply rounded-xl border border-slate-200 bg-white shadow-sm;
+    @apply bg-surface border-subtle rounded-xl border shadow-sm;
   }
 
   .btn-primary,
@@ -104,7 +138,7 @@ body {
   }
 
   .btn-secondary {
-    @apply border border-slate-300 bg-white text-slate-700 hover:bg-slate-50;
+    @apply border-subtle bg-surface text-foreground hover:bg-surface-muted border;
   }
 
   .btn-danger {
@@ -112,11 +146,12 @@ body {
   }
 
   .input {
-    @apply block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-2 focus:outline-brand-500/30;
+    @apply border-subtle bg-surface text-foreground placeholder:text-muted focus:border-brand-500 block w-full rounded-lg border px-3 py-2 text-sm focus:outline-2;
+    outline-color: var(--focus-ring);
   }
 
   .label {
-    @apply mb-1.5 block text-sm font-medium text-slate-700;
+    @apply text-foreground mb-1.5 block text-sm font-medium;
   }
 
   .badge {
@@ -128,14 +163,114 @@ body {
   }
 
   .table-base thead th {
-    @apply border-b border-slate-200 px-4 py-3 text-xs font-semibold tracking-wide text-slate-500 uppercase;
+    @apply border-subtle text-muted border-b px-4 py-3 text-xs font-semibold tracking-wide uppercase;
   }
 
   .table-base tbody td {
-    @apply border-b border-slate-100 px-4 py-3 text-slate-700;
+    @apply border-subtle text-foreground border-b px-4 py-3;
   }
 
   .table-base tbody tr:hover {
-    @apply bg-slate-50;
+    @apply bg-surface-muted;
+  }
+}
+
+/* Compatibility while page-level markup migrates to the semantic tokens. */
+:root[data-color-mode="dark"] .bg-white {
+  background-color: var(--surface-panel);
+}
+
+:root[data-color-mode="dark"] .bg-slate-50 {
+  background-color: var(--surface-page);
+}
+
+:root[data-color-mode="dark"] .bg-slate-100,
+:root[data-color-mode="dark"] [class~="hover:bg-slate-50"]:hover,
+:root[data-color-mode="dark"] [class~="hover:bg-slate-100"]:hover {
+  background-color: var(--surface-muted);
+}
+
+:root[data-color-mode="dark"] .text-slate-900,
+:root[data-color-mode="dark"] .text-slate-800,
+:root[data-color-mode="dark"] .text-slate-700,
+:root[data-color-mode="dark"] .text-slate-600 {
+  color: var(--text-primary);
+}
+
+:root[data-color-mode="dark"] .text-slate-500,
+:root[data-color-mode="dark"] .text-slate-400 {
+  color: var(--text-muted);
+}
+
+:root[data-color-mode="dark"] .border-slate-100,
+:root[data-color-mode="dark"] .border-slate-200,
+:root[data-color-mode="dark"] .border-slate-300,
+:root[data-color-mode="dark"] .divide-slate-100 > :not(:last-child),
+:root[data-color-mode="dark"] .divide-slate-200 > :not(:last-child) {
+  border-color: var(--border-subtle);
+}
+
+:root[data-color-mode="dark"] [class~="bg-brand-50"],
+:root[data-color-mode="dark"] [class~="bg-brand-50/50"],
+:root[data-color-mode="dark"] [class~="bg-brand-100"] {
+  background-color: color-mix(
+    in srgb,
+    var(--color-brand-500) 18%,
+    var(--surface-panel)
+  );
+}
+
+:root[data-color-mode="dark"] [class~="bg-green-50"],
+:root[data-color-mode="dark"] [class~="bg-green-100"] {
+  background-color: color-mix(in srgb, #22c55e 16%, var(--surface-panel));
+}
+
+:root[data-color-mode="dark"] [class~="bg-red-50"],
+:root[data-color-mode="dark"] [class~="bg-red-100"] {
+  background-color: color-mix(in srgb, #ef4444 16%, var(--surface-panel));
+}
+
+:root[data-color-mode="dark"] [class~="bg-amber-50"],
+:root[data-color-mode="dark"] [class~="bg-amber-100"] {
+  background-color: color-mix(in srgb, #f59e0b 16%, var(--surface-panel));
+}
+
+:root[data-color-mode="dark"] [class~="bg-blue-50"],
+:root[data-color-mode="dark"] [class~="bg-blue-100"] {
+  background-color: color-mix(in srgb, #3b82f6 16%, var(--surface-panel));
+}
+
+:root[data-color-mode="dark"] .text-green-600,
+:root[data-color-mode="dark"] .text-green-700 {
+  color: #86efac;
+}
+
+:root[data-color-mode="dark"] .text-red-600,
+:root[data-color-mode="dark"] .text-red-700 {
+  color: #fca5a5;
+}
+
+:root[data-color-mode="dark"] .text-amber-700,
+:root[data-color-mode="dark"] .text-amber-800 {
+  color: #fcd34d;
+}
+
+:root[data-color-mode="dark"] .text-blue-700,
+:root[data-color-mode="dark"] .text-blue-800 {
+  color: #93c5fd;
+}
+
+@media print {
+  :root[data-color-mode="dark"] {
+    --surface-page: #ffffff;
+    --surface-panel: #ffffff;
+    --surface-muted: #f1f5f9;
+    --text-primary: #0f172a;
+    --text-muted: #64748b;
+    --border-subtle: #e2e8f0;
+  }
+
+  .color-mode-toggle {
+    display: none;
   }
 }

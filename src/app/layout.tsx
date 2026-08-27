@@ -3,6 +3,7 @@ import "./globals.css";
 import { getSetting } from "@/lib/settings";
 import { getLocale } from "@/lib/i18n";
 import { isTheme } from "@/lib/themes";
+import { ColorModeToggle } from "@/components/color-mode-toggle";
 
 // Every page reads live data (settings, catalog, session), so nothing is
 // statically prerendered — this keeps `next build` from needing a database.
@@ -25,8 +26,22 @@ export default async function RootLayout({
     getLocale(),
   ]);
   return (
-    <html lang={locale} data-theme={isTheme(theme) ? theme : "indigo"}>
-      <body>{children}</body>
+    <html
+      lang={locale}
+      data-theme={isTheme(theme) ? theme : "indigo"}
+      suppressHydrationWarning
+    >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var p=localStorage.getItem("openhosting-color-mode");if(p!=="light"&&p!=="dark")p="system";var m=p==="system"?(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):p;document.documentElement.dataset.colorMode=m;document.documentElement.dataset.colorModePreference=p;document.documentElement.style.colorScheme=m}catch(e){}})();`,
+          }}
+        />
+      </head>
+      <body>
+        {children}
+        <ColorModeToggle />
+      </body>
     </html>
   );
 }
