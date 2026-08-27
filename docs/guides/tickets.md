@@ -41,9 +41,16 @@ default and need your own model API key — see [AI support](ai-support.md).
 ## Attachments
 
 Both customers and staff can attach files (up to 3 per message, 5 MB each).
-Allowed types include images, PDF, plain text, ZIP and JSON. Files are stored in
-the database and served through an authenticated download route — only the
-ticket owner and staff can fetch them.
+Allowed types include images, PDF, plain text, ZIP and JSON. PostgreSQL storage
+is the zero-configuration default. Operators can instead use a private AWS S3,
+Cloudflare R2, MinIO, Backblaze B2, or other S3-compatible bucket by setting
+`ATTACHMENT_STORAGE=s3` and the `ATTACHMENT_S3_*` variables described in the
+[environment reference](../getting-started/environment.md).
+
+Every download first passes through OpenHosting's authenticated route. Only the
+ticket owner and staff are authorized; S3-backed files then receive a short-lived
+signed download URL. Existing database-backed attachments continue to work after
+switching new uploads to S3.
 
 ## Notifications
 

@@ -593,16 +593,20 @@ model TicketMessage {
   createdAt   DateTime           @default(now())
 }
 
-// Stored in the database to stay infrastructure-free (5 MB cap per file).
+// Database storage remains the default; S3-compatible storage keeps only a key.
 model TicketAttachment {
-  id        String        @id @default(cuid())
-  messageId String
-  message   TicketMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  filename  String
-  mimeType  String
-  size      Int
-  data      Bytes
-  createdAt DateTime      @default(now())
+  id             String        @id @default(cuid())
+  messageId      String
+  message        TicketMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  filename       String
+  mimeType       String
+  size           Int
+  storageBackend String        @default("database")
+  storageKey     String?
+  data           Bytes?
+  createdAt      DateTime      @default(now())
+
+  @@index([storageBackend, storageKey])
 }
 
 // ── Platform ────────────────────────────────────────────────────────────────

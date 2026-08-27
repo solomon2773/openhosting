@@ -1,5 +1,9 @@
 import "server-only";
 import { db } from "@/lib/db";
+import {
+  deleteAttachmentObject,
+  storeAttachmentObject,
+} from "@/lib/storage/attachment-storage";
 
 const MAX_FILES = 3;
 const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
@@ -28,15 +32,28 @@ export async function saveTicketAttachments(
     }
   }
   for (const file of usable) {
-    await db.ticketAttachment.create({
-      data: {
-        messageId,
-        filename: file.name,
-        mimeType: file.type,
-        size: file.size,
-        data: Buffer.from(await file.arrayBuffer()),
-      },
+    const stored = await storeAttachmentObject({
+      messageId,
+      filename: file.name,
+      mimeType: file.type,
+      data: Buffer.from(await file.arrayBuffer()),
     });
+    try {
+      await db.ticketAttachment.create({
+        data: {
+          messageId,
+          filename: file.name,
+          mimeType: file.type,
+          size: file.size,
+          ...stored,
+        },
+      });
+    } catch (error) {
+      if (stored.storageBackend === "s3" && stored.storageKey) {
+        await deleteAttachmentObject(stored.storageKey).catch(() => undefined);
+      }
+      throw error;
+    }
   }
   return null;
 }

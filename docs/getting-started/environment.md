@@ -13,6 +13,15 @@ currency and SMTP is configured in the admin panel instead — see
 | `SKIP_MIGRATIONS` | | `true` skips `prisma migrate deploy` in the container entrypoint (when migrations run elsewhere). |
 | `SEED_ADMIN_PASSWORD` | | Admin password used by `npm run db:seed`, applied only when the account is created. Defaults to `admin12345`. |
 | `SEED_ADMIN_EMAIL` | | Address of the admin account the seed creates. Defaults to `admin@example.com`; the installer writes the address you chose here so re-seeding never adds a second admin. |
+| `ATTACHMENT_STORAGE` | | `database` (default) or `s3` for new ticket attachments. Existing rows retain their original backend. |
+| `ATTACHMENT_S3_BUCKET` | S3 only | Private bucket used for attachments. |
+| `ATTACHMENT_S3_REGION` | S3 only | Bucket signing region. Defaults to `us-east-1`; R2 commonly uses `auto`. |
+| `ATTACHMENT_S3_ENDPOINT` | | Custom S3-compatible endpoint. Omit for AWS S3. |
+| `ATTACHMENT_S3_ACCESS_KEY_ID` | | Static access key. Set together with the secret; omit both to use the AWS credential provider chain. |
+| `ATTACHMENT_S3_SECRET_ACCESS_KEY` | | Static secret key. Never expose it to the browser. |
+| `ATTACHMENT_S3_FORCE_PATH_STYLE` | | `true` for providers such as a local MinIO deployment that require path-style bucket URLs. |
+| `ATTACHMENT_S3_PREFIX` | | Object-key prefix. Defaults to `attachments`. |
+| `ATTACHMENT_S3_DOWNLOAD_TTL_SECONDS` | | Signed download lifetime from 60 to 604800 seconds. Defaults to 300. |
 | `PORT` | | Port the server listens on (default `3000`). |
 | `NODE_ENV` | | Set to `production` in production (the image sets this). |
 | `SHADOW_DATABASE_URL` | | Only for generating new migrations locally — a spare database Prisma uses as a shadow. |
