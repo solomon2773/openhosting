@@ -1,6 +1,6 @@
 # Payment gateways
 
-OpenHosting includes 19 payment gateways. Enable and configure the ones you use
+OpenHosting includes 20 payment gateways. Enable and configure the ones you use
 under **Admin → Extensions**; enabled gateways appear as payment options at
 checkout. Gateways that confirm payment asynchronously call back at
 `/api/webhooks/<slug>` — set that URL in the gateway's dashboard.
@@ -34,6 +34,15 @@ Drop-in card UI (PayPal-owned). Set **merchant ID**, public/private keys and a
 tokenization key.
 
 ## Crypto
+
+### x402 (`x402`) — USDC machine payments
+
+x402 v2 exact settlement for USDC invoices. Configure a facilitator URL,
+CAIP-2 network, official USDC asset identifier, receiving wallet, and optional
+facilitator credential. This driver is only offered for `USDC` invoices; the
+other gateways are only offered for conventional three-letter currencies.
+See [Agent commerce](../guides/agent-commerce.md#usdc-and-x402-v2) for the HTTP
+flow and mainnet safety checklist.
 
 ### Coinbase Commerce (`coinbase-commerce`)
 Hosted crypto checkout. Set the **API key** and webhook shared secret.

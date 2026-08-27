@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { payInvoice } from "@/lib/actions/client";
 import { SubmitButton } from "@/components/forms";
+import { formatMoney } from "@/lib/format";
 
 export function PayBox({
   invoiceId,
@@ -18,8 +19,7 @@ export function PayBox({
   currency: string;
 }) {
   const [state, formAction] = useActionState(payInvoice, null);
-  const fmt = (n: number) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency }).format(n);
+  const fmt = (n: number) => formatMoney(n, currency);
 
   const methods = [
     ...gateways.map((g) => ({ value: g.slug, label: g.name })),

@@ -5,21 +5,38 @@ priced in a single **base currency**.
 
 ## Base currency
 
-Set your base currency under **Admin → Settings → Currency** (an ISO code like
-`USD` or `EUR`). All product prices, coupons, tax amounts and account credit are
-stored in this currency.
+Set your base currency under **Admin → Settings → Currency** (normally an ISO
+code like `USD` or `EUR`). All product prices, coupons, tax amounts and account
+credit are stored in this currency.
 
 ## Additional currencies
 
 Add more under **Admin → Currencies**. Each has:
 
-- **ISO code** (e.g. `EUR`)
+- **Currency or asset code** (e.g. `EUR` or `USDC`)
 - **Symbol** (optional, e.g. `€`)
+- **Kind** — fiat or stablecoin
+- **Decimals** — `2` for most fiat currencies and `6` for USDC
 - **Rate** — how many units of this currency equal 1 unit of the base currency
+- **Settlement networks** — CAIP-2 network identifiers accepted by the payment rail
 - **Enabled** — whether customers can pick it
 
 For example, with a `USD` base and `EUR` at rate `0.92`, a `$5.99` product shows
 as `€5.51`.
+
+## USDC
+
+The seed data includes USDC as a disabled stablecoin with six-decimal precision.
+Its initial settlement networks are Base (`eip155:8453`) and Solana mainnet
+(`solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`). The `rate` is still relative to
+your configured base currency; a value of `1` is only appropriate when that base
+is USD and your pricing policy treats one USDC as one USD.
+
+Enabling the asset makes it available for pricing and invoice locking. It does
+not, by itself, activate on-chain collection. Configure and test the x402
+gateway's facilitator, receiving address, network, and asset identifier before
+accepting live payments. OpenHosting never stores a payer seed phrase or private
+key.
 
 ## How customers use it
 

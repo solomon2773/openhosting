@@ -418,18 +418,45 @@ export async function saveCurrency(
 ): Promise<FormState> {
   await requireAdmin("settings");
   const code = str(formData, "code").toUpperCase();
-  if (!/^[A-Z]{3}$/.test(code)) return { error: "Use a 3-letter ISO code." };
+  if (!/^[A-Z0-9]{3,12}$/.test(code)) {
+    return { error: "Use a 3–12 character currency or asset code." };
+  }
   const rate = Number(formData.get("rate") ?? 0);
-  if (rate <= 0) return { error: "Rate must be greater than zero." };
+  if (!Number.isFinite(rate) || rate <= 0) {
+    return { error: "Rate must be greater than zero." };
+  }
+  const kind =
+    str(formData, "kind") === "STABLECOIN"
+      ? ("STABLECOIN" as const)
+      : ("FIAT" as const);
+  const decimals = Number(formData.get("decimals") ?? (kind === "STABLECOIN" ? 6 : 2));
+  if (!Number.isInteger(decimals) || decimals < 0 || decimals > 8) {
+    return { error: "Decimals must be a whole number between 0 and 8." };
+  }
+  const settlementNetworks = str(formData, "settlementNetworks")
+    .split(",")
+    .map((network) => network.trim())
+    .filter(Boolean);
+  if (
+    settlementNetworks.some(
+      (network) =>
+        network.length > 100 || !/^[a-zA-Z0-9][a-zA-Z0-9:_-]*$/.test(network),
+    )
+  ) {
+    return { error: "Use comma-separated CAIP-2 network identifiers." };
+  }
+  const data = {
+    rate,
+    symbol: str(formData, "symbol") || null,
+    kind,
+    decimals,
+    settlementNetworks,
+    enabled: formData.get("enabled") === "on",
+  };
   await db.currency.upsert({
     where: { code },
-    update: { rate, enabled: formData.get("enabled") === "on" },
-    create: {
-      code,
-      rate,
-      symbol: str(formData, "symbol") || null,
-      enabled: formData.get("enabled") === "on",
-    },
+    update: data,
+    create: { code, ...data },
   });
   revalidatePath("/admin/currencies");
   return { success: "Currency saved." };

@@ -16,15 +16,15 @@ export default async function InvoiceDetailPage({
   const { id } = await params;
   const user = await requireUser();
   const t = await getT();
-  const [settings, invoice, gateways] = await Promise.all([
+  const [settings, invoice] = await Promise.all([
     getSettings(["company_name"]),
     db.invoice.findUnique({
       where: { id },
       include: { items: true, payments: true },
     }),
-    enabledGateways(),
   ]);
   if (!invoice || (invoice.userId !== user.id && !user.roleId)) notFound();
+  const supportedGateways = await enabledGateways(invoice.currency);
 
   return (
     <div>
@@ -116,7 +116,7 @@ export default async function InvoiceDetailPage({
                 total={Number(invoice.total)}
                 currency={invoice.currency}
                 credits={Number(user.credits)}
-                gateways={gateways.map((g) => ({ slug: g.slug, name: g.name }))}
+                gateways={supportedGateways.map((g) => ({ slug: g.slug, name: g.name }))}
               />
             </div>
           ) : (

@@ -7,10 +7,9 @@ import {
   roundAsset,
   roundCurrency,
 } from "@/lib/billing-policy";
+import type { ChargeCurrency } from "@/lib/services/currency";
 import { CYCLE_MONTHS } from "@/lib/format";
 import { getSettings } from "@/lib/settings";
-
-type CheckoutCurrency = { code: string; rate: number; decimals?: number };
 
 // Order service: turns a cart into an order + invoice + pending services,
 // applying coupons and taxes. The only module that computes checkout math.
@@ -54,7 +53,13 @@ export async function priceCart(lines: CartLine[]): Promise<PricedLine[]> {
         configOptions: { include: { values: true } },
       },
     });
-    if (!product || product.hidden) continue;
+    if (
+      !product ||
+      product.hidden ||
+      (product.stock !== null && product.stock < Math.max(1, line.quantity))
+    ) {
+      continue;
+    }
     const price = product.prices.find((p) => p.cycle === line.cycle);
     if (!price) continue;
 
@@ -104,7 +109,7 @@ export async function computeTotals(
   lines: PricedLine[],
   couponCode: string | null,
   country: string | null,
-  currency?: CheckoutCurrency,
+  currency?: ChargeCurrency,
   taxExempt = false,
 ) {
   // All math happens in base currency, then converts once at the end.
@@ -157,7 +162,7 @@ export async function placeOrder(
   userId: string,
   lines: PricedLine[],
   couponCode: string | null,
-  currency?: CheckoutCurrency,
+  currency?: ChargeCurrency,
   guard: OrderGuard = {},
 ) {
   if (lines.length === 0) throw new Error("Cart is empty");

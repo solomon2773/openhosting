@@ -49,6 +49,9 @@ export default async function AccountPage() {
         <a href="/dashboard/account/billing" className="btn-secondary">
           Billing methods
         </a>
+        <a href="/dashboard/account/agent-access" className="btn-secondary">
+          Agent access
+        </a>
       </div>
 
       <div className="card p-6">

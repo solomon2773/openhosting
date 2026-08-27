@@ -1,6 +1,7 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
+import { roundAsset } from "@/lib/billing-policy";
 import { getSetting } from "@/lib/settings";
 
 // Currency service: the only module that knows about exchange rates.
@@ -9,24 +10,46 @@ import { getSetting } from "@/lib/settings";
 
 const CURRENCY_COOKIE = "oh_currency";
 
-function round2(n: number): number {
-  return Math.round(n * 100) / 100;
+export type ChargeCurrency = {
+  code: string;
+  rate: number;
+  kind: "FIAT" | "STABLECOIN";
+  decimals: number;
+  settlementNetworks: string[];
+};
+
+function networksFromJson(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((network): network is string => typeof network === "string");
 }
 
 export async function getBaseCurrency(): Promise<string> {
   return getSetting("currency");
 }
 
-export async function getEnabledCurrencies(): Promise<
-  Array<{ code: string; rate: number }>
-> {
+export async function getEnabledCurrencies(): Promise<ChargeCurrency[]> {
   const base = await getBaseCurrency();
-  const extra = await db.currency.findMany({ where: { enabled: true } });
+  const extra = await db.currency.findMany({
+    where: { OR: [{ enabled: true }, { code: base }] },
+  });
+  const baseRecord = extra.find((currency) => currency.code === base);
   return [
-    { code: base, rate: 1 },
+    {
+      code: base,
+      rate: 1,
+      kind: baseRecord?.kind ?? "FIAT",
+      decimals: baseRecord?.decimals ?? 2,
+      settlementNetworks: networksFromJson(baseRecord?.settlementNetworks),
+    },
     ...extra
       .filter((c) => c.code !== base)
-      .map((c) => ({ code: c.code, rate: Number(c.rate) })),
+      .map((c) => ({
+        code: c.code,
+        rate: Number(c.rate),
+        kind: c.kind,
+        decimals: c.decimals,
+        settlementNetworks: networksFromJson(c.settlementNetworks),
+      })),
   ];
 }
 
@@ -34,7 +57,7 @@ export async function getEnabledCurrencies(): Promise<
 // preference, else base.
 export async function getActiveCurrency(
   userPreference?: string | null,
-): Promise<{ code: string; rate: number }> {
+): Promise<ChargeCurrency> {
   const currencies = await getEnabledCurrencies();
   const cookieStore = await cookies();
   const fromCookie = cookieStore.get(CURRENCY_COOKIE)?.value;
@@ -43,6 +66,29 @@ export async function getActiveCurrency(
     currencies.find((c) => c.code === userPreference) ??
     currencies[0]
   );
+}
+
+export async function getChargeCurrency(code: string): Promise<ChargeCurrency | null> {
+  const normalized = code.toUpperCase();
+  const base = await getBaseCurrency();
+  const record = await db.currency.findUnique({ where: { code: normalized } });
+  if (normalized === base) {
+    return {
+      code: base,
+      rate: 1,
+      kind: record?.kind ?? "FIAT",
+      decimals: record?.decimals ?? 2,
+      settlementNetworks: networksFromJson(record?.settlementNetworks),
+    };
+  }
+  if (!record) return null;
+  return {
+    code: record.code,
+    rate: Number(record.rate),
+    kind: record.kind,
+    decimals: record.decimals,
+    settlementNetworks: networksFromJson(record.settlementNetworks),
+  };
 }
 
 export async function setActiveCurrencyCookie(code: string): Promise<void> {
@@ -56,9 +102,9 @@ export async function setActiveCurrencyCookie(code: string): Promise<void> {
 
 export function convertFromBase(
   amount: number,
-  currency: { code: string; rate: number },
+  currency: Pick<ChargeCurrency, "code" | "rate" | "decimals">,
 ): number {
-  return round2(amount * currency.rate);
+  return roundAsset(amount * currency.rate, currency.decimals);
 }
 
 // Convert an amount in `code` back to the base currency at current rates.
@@ -69,5 +115,5 @@ export async function convertToBase(
   const currencies = await getEnabledCurrencies();
   const currency = currencies.find((c) => c.code === code);
   if (!currency || currency.rate === 0) return amount;
-  return round2(amount / currency.rate);
+  return roundAsset(amount / currency.rate, currencies[0].decimals);
 }

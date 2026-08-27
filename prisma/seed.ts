@@ -259,6 +259,22 @@ async function main() {
     update: {},
     create: { code: "EUR", symbol: "€", rate: 0.92, enabled: true },
   });
+  await db.currency.upsert({
+    where: { code: "USDC" },
+    update: {},
+    create: {
+      code: "USDC",
+      symbol: "USDC",
+      kind: "STABLECOIN",
+      decimals: 6,
+      settlementNetworks: [
+        "eip155:8453",
+        "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+      ],
+      rate: 1,
+      enabled: false,
+    },
+  });
 
   // ── Settings & email templates ────────────────────────────────────────────
   const PLACEHOLDER_URL = "http://localhost:3000";

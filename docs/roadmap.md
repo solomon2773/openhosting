@@ -42,15 +42,15 @@ contributions and design feedback shape the ordering.
 
 ## Phase 2 — "AI agents as customers" (v0.7+)
 
-5. **Agent checkout API** — a first-class machine purchase flow:
+5. **Agent checkout API — shipped** — a first-class machine purchase flow:
    machine-readable catalog feed, idempotent order placement, delegated
    purchase tokens with spend caps and product allow-lists, full audit trail.
    The fraud pipeline gains an "agent buyer" lane instead of treating all
    automation as abuse.
-6. **Agentic Commerce Protocol (ACP)** — expose catalog + checkout in ACP
-   shape through the Stripe gateway, so purchases can complete natively
-   inside AI surfaces (ChatGPT, Gemini) as that channel opens to services.
-7. **x402 machine payments** — a gateway driver accepting stablecoin
+6. **Agentic Commerce Protocol (ACP) — beta shipped** — a versioned
+   2026-04-17 checkout-session surface through Stripe Shared Payment Tokens,
+   backed by the same delegated limits and order engine.
+7. **x402 machine payments — shipped** — an x402 v2 gateway accepting USDC
    per-use payments (HTTP 402 flow); pairs with metered billing for true
    pay-per-request / pay-per-hour infrastructure resale.
 8. **Admin copilot** — a chat panel inside the admin that uses OpenHosting's
@@ -72,6 +72,12 @@ contributions and design feedback shape the ordering.
 12. **GPU / AI-infra reseller pack** — hourly and GPU-metered billing
     presets plus token-usage metering, targeting the fastest-growing hosting
     segment: AI compute resale.
+13. **Anonymous autonomous account creation** — let an agent establish and
+    operate a pseudonymous account without a pre-existing human login. This is
+    intentionally a future capability, after delegated checkout is proven: it
+    requires durable agent identity, recovery and ownership rules, abuse and
+    fraud controls, jurisdiction-aware compliance, and tightly bounded payment
+    authority before an account can provision infrastructure safely.
 
 ## Principles (constant across all phases)
 
