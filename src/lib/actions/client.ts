@@ -251,6 +251,25 @@ export async function createTicket(
   } catch {
     // classification is best-effort
   }
+  // Optional tier-1 resolution is separately gated by published sources and a
+  // high confidence threshold. Provider failure never blocks ticket creation.
+  try {
+    const { autoResolveTicket } = await import("@/lib/services/ai");
+    const resolution = await autoResolveTicket(ticket.id);
+    if (resolution) {
+      await audit("ticket.auto_resolved", {
+        userId: user.id,
+        targetType: "ticket",
+        targetId: ticket.id,
+        metadata: {
+          confidence: resolution.confidence,
+          sourceArticleIds: resolution.sourceArticleIds,
+        },
+      });
+    }
+  } catch {
+    // automatic resolution is best-effort; the open ticket remains available
+  }
   redirect(`/dashboard/tickets/${ticket.id}`);
 }
 

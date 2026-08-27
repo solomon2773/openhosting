@@ -29,8 +29,9 @@ export async function TicketThread({
     <div className="space-y-6">
       <div className="space-y-4">
         {ticket.messages.map((message) => {
-          const isStaff = Boolean(message.user.roleId);
-          const isViewer = message.userId === viewerId;
+          const isAi = message.isAiGenerated;
+          const isStaff = Boolean(message.user.roleId) || isAi;
+          const isViewer = message.userId === viewerId && !isAi;
           return (
             <div
               key={message.id}
@@ -38,12 +39,18 @@ export async function TicketThread({
             >
               <div className="mb-2 flex items-center justify-between text-sm">
                 <p className="font-medium">
-                  {message.user.firstName} {message.user.lastName}
-                  {isStaff && (
+                  {isAi
+                    ? t("ticket.aiSupport")
+                    : `${message.user.firstName} ${message.user.lastName}`}
+                  {isAi ? (
+                    <span className="badge ml-2 bg-brand-100 text-brand-700">
+                      {t("ticket.automated")}
+                    </span>
+                  ) : isStaff ? (
                     <span className="badge ml-2 bg-brand-100 text-brand-700">
                       {t("ticket.staff")}
                     </span>
-                  )}
+                  ) : null}
                   {isViewer && !isStaff && (
                     <span className="ml-2 text-xs text-slate-400">{t("ticket.you")}</span>
                   )}

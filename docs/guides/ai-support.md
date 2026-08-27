@@ -2,8 +2,9 @@
 
 OpenHosting can draft ticket replies for your staff and classify incoming
 tickets, using **your own** API key. Nothing is sent to a model provider unless
-you enable a provider and switch a feature on, and nothing an AI writes reaches
-a customer without a person pressing send.
+you enable a provider and switch a feature on. Reply drafts remain staff-reviewed;
+the separate auto-resolution feature is an explicit opt-in with stricter source,
+priority, and confidence gates.
 
 ## Setting it up
 
@@ -25,6 +26,8 @@ a customer without a person pressing send.
 | Draft sign-off | — | Appended verbatim, e.g. `— The support team` |
 | Classify new tickets | off | Sets department and priority when a ticket is created |
 | Minimum triage confidence | 0.7 | Below this the customer's own choices are kept |
+| Auto-resolve grounded tier-1 tickets | off | Posts and closes only a non-urgent answer grounded in published articles |
+| Minimum auto-resolve confidence | 0.92 | Below this the ticket remains open for staff |
 
 ## Reply drafts
 
@@ -66,11 +69,27 @@ Two deliberate limits:
   support form that fails because an AI is unavailable would be worse than no
   classification at all.
 
+## Automatic tier-1 resolution
+
+Auto-resolution is off by default and is independent from reply drafts and
+triage. It only runs for a newly opened ticket that is not high priority. The
+model must return a structured answer above the configured confidence threshold,
+mark the request as not requiring a person, and cite one or more article IDs
+that still exist in the published knowledgebase. Invented, unpublished, or
+missing citations reject the answer.
+
+Account changes, refunds, disputes, outages, security/abuse reports, uncertain
+diagnoses, and any request needing an external action must stay with staff. A
+qualifying answer is posted with an **Automated** badge, the ticket is closed in
+the same database transaction, and `ticket.auto_resolved` records its confidence
+and source article IDs in the audit log. If a staff/customer update races the
+model response, the optimistic write fails and no automated message is posted.
+
 ## Costs and privacy
 
 - You are billed by your provider for the tokens each feature uses. A reply
-  draft sends your published knowledgebase plus the ticket thread; a
-  classification sends the subject and first message only.
+  draft and auto-resolution send published knowledgebase content plus relevant
+  ticket text; classification sends the subject and first message.
 - Ticket content and knowledgebase articles are sent to the provider you
   configured, when a feature runs. Customer passwords, payment details and API
   keys are never part of a prompt.

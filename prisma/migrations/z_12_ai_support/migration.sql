@@ -1,0 +1,2 @@
+ALTER TABLE "TicketMessage"
+ADD COLUMN "isAiGenerated" BOOLEAN NOT NULL DEFAULT false;

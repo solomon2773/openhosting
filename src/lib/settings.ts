@@ -37,6 +37,9 @@ export const SETTING_DEFAULTS: Record<string, string> = {
   ai_auto_triage: "false",
   // below this confidence the customer's own choices are left alone (0-1)
   ai_triage_min_confidence: "0.7",
+  // close a new tier-1 ticket only when the model cites published KB articles
+  ai_auto_resolve: "false",
+  ai_auto_resolve_min_confidence: "0.92",
   // ── Fraud prevention ──
   fraud_review_all: "false",
   // external risk score (0-99) at or above which orders go to manual review

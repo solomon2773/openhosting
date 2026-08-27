@@ -105,6 +105,18 @@ const SECTIONS: Array<{
         type: "text",
         help: "Below this the customer's own choices are kept.",
       },
+      {
+        key: "ai_auto_resolve",
+        label: "Auto-resolve grounded tier-1 tickets",
+        type: "checkbox",
+        help: "Opt-in. Only closes non-urgent new tickets when the answer cites published knowledgebase articles above the confidence threshold.",
+      },
+      {
+        key: "ai_auto_resolve_min_confidence",
+        label: "Minimum auto-resolve confidence (0-1)",
+        type: "text",
+        help: "Defaults to 0.92. Lower thresholds increase the risk of an incorrect automatic answer.",
+      },
     ],
   },
   {
