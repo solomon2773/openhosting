@@ -28,6 +28,8 @@ priority, and confidence gates.
 | Minimum triage confidence | 0.7 | Below this the customer's own choices are kept |
 | Auto-resolve grounded tier-1 tickets | off | Posts and closes only a non-urgent answer grounded in published articles |
 | Minimum auto-resolve confidence | 0.92 | Below this the ticket remains open for staff |
+| Read-only customer assistant | off | Adds a client-area chat over published articles and that customer's account summary |
+| Customer questions per hour | 20 | Per-account cost and abuse limit; `0` stops requests |
 
 ## Reply drafts
 
@@ -85,11 +87,27 @@ the same database transaction, and `ticket.auto_resolved` records its confidence
 and source article IDs in the audit log. If a staff/customer update races the
 model response, the optimistic write fails and no automated message is posted.
 
+## Customer assistant
+
+When enabled, **Dashboard → AI assistant** provides a read-only chat grounded in:
+
+- published knowledgebase articles;
+- up to 50 of the signed-in customer's own services; and
+- up to 30 of that customer's recent invoices.
+
+The assistant receives no service configuration, credentials, payment methods,
+or other customers' data. It cannot mutate the account or claim that it took an
+action. Requests are rate-limited per account through audited successful calls.
+The customer can send the visible transcript to the normal support queue with
+**Escalate to ticket** whenever a person or account change is needed.
+
 ## Costs and privacy
 
 - You are billed by your provider for the tokens each feature uses. A reply
   draft and auto-resolution send published knowledgebase content plus relevant
-  ticket text; classification sends the subject and first message.
+  ticket text; classification sends the subject and first message. Customer
+  assistant requests send the published knowledgebase and the requesting
+  customer's limited account summary.
 - Ticket content and knowledgebase articles are sent to the provider you
   configured, when a feature runs. Customer passwords, payment details and API
   keys are never part of a prompt.
