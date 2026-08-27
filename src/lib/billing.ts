@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import {
   lifecycleCutoff,
   renewalInvoiceHorizon,
+  roundAsset,
 } from "@/lib/billing-policy";
 import { addCycle, formatMoney, formatDate } from "@/lib/format";
 import { getSetting, getSettings, publicUrlForEmail } from "@/lib/settings";
@@ -232,13 +233,20 @@ export async function generateRenewalInvoices(now = new Date()): Promise<number>
     const usage = await consumeUnbilledUsage(service.id);
     let total = base;
     if (usage && usage.amount > 0) {
+      const { getChargeCurrency, convertFromBase } = await import(
+        "@/lib/services/currency"
+      );
+      const chargeCurrency = await getChargeCurrency(currency);
+      const usageAmount = chargeCurrency
+        ? convertFromBase(usage.amount, chargeCurrency)
+        : usage.amount;
       items.push({
         description: `${service.product.name} — usage: ${usage.quantity}${usage.unit ? " " + usage.unit : ""}`,
         quantity: 1,
-        unitPrice: usage.amount,
+        unitPrice: usageAmount,
         serviceId: service.id,
       });
-      total += usage.amount;
+      total = roundAsset(total + usageAmount, chargeCurrency?.decimals ?? 2);
     }
     const invoice = await db.invoice.create({
       data: {

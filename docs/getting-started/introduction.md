@@ -16,7 +16,7 @@ no PHP runtime, and no per-client license fee — it's MIT licensed.
 |---|---|
 | **Storefront** | Categories, products, six billing cycles, configurable options, cart, coupons, taxes, multi-currency |
 | **Billing** | Orders → invoices → services, automated renewals, suspension and termination, account credit, auto-charge with saved cards |
-| **Payments** | 19 gateways: cards, crypto, SEPA, merchant-of-record and regional |
+| **Payments** | 20 gateways: cards, USDC/x402, crypto, SEPA, merchant-of-record and regional |
 | **Provisioning** | 27 server integrations (game panels, VPS/cloud, enterprise virt, web panels) |
 | **Resale** | Domains, SSL certificates, software licenses, Microsoft 365 / Google Workspace seats |
 | **Support** | Tickets with departments, priorities and attachments; notification center |

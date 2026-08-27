@@ -118,6 +118,52 @@ describe("renewal invoice generation", () => {
     expect(Number(invoices[0].items[0].unitPrice)).toBe(25);
   });
 
+  test("converts sub-cent metered usage into a USDC-locked renewal", async () => {
+    const now = new Date("2026-08-27T12:00:00.000Z");
+    const { user, product } = await createCustomerAndProduct();
+    await db.setting.createMany({
+      data: [
+        { key: "currency", value: "USD" },
+        { key: "invoice_days_before", value: "7" },
+      ],
+    });
+    await db.currency.create({
+      data: {
+        code: "USDC",
+        kind: "STABLECOIN",
+        decimals: 6,
+        settlementNetworks: ["eip155:8453"],
+        rate: 1,
+      },
+    });
+    await db.product.update({
+      where: { id: product.id },
+      data: { metered: true, meteredUnit: "request", meteredUnitPrice: 0.000001 },
+    });
+    const service = await db.service.create({
+      data: {
+        userId: user.id,
+        productId: product.id,
+        status: "ACTIVE",
+        cycle: "MONTHLY",
+        price: 5,
+        currency: "USDC",
+        expiresAt: now,
+      },
+    });
+    await db.usageRecord.create({
+      data: { serviceId: service.id, quantity: 1 },
+    });
+
+    expect(await generateRenewalInvoices(now)).toBe(1);
+    const invoice = await db.invoice.findFirstOrThrow({
+      where: { userId: user.id },
+      include: { items: true },
+    });
+    expect(invoice.currency).toBe("USDC");
+    expect(invoice.total.toString()).toBe("5.000001");
+    expect(invoice.items[1].unitPrice.toString()).toBe("0.000001");
+  });
 });
 
 describe("service lifecycle cutoffs", () => {

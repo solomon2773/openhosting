@@ -25,7 +25,7 @@ const SECTIONS: Array<{
         label: "Public URL",
         help: "Used in emails, payment redirects and referral links. Until you set it, pages fall back to the address you are browsing on — but emails cannot, so set it.",
       },
-      { key: "currency", label: "Currency (ISO code)", help: "e.g. USD, EUR" },
+      { key: "currency", label: "Base currency code", help: "Normally USD or EUR" },
       {
         key: "theme",
         label: "Theme",

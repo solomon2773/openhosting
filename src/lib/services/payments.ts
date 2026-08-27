@@ -1,7 +1,11 @@
 import "server-only";
 import { db } from "@/lib/db";
 import { getGatewayDriver } from "@/lib/extensions/registry";
-import { extensionConfig, type PayResult } from "@/lib/extensions/types";
+import {
+  extensionConfig,
+  gatewayAcceptsCurrency,
+  type PayResult,
+} from "@/lib/extensions/types";
 import { getSetting, publicUrl } from "@/lib/settings";
 import { markInvoicePaid } from "@/lib/billing";
 import { convertToBase } from "@/lib/services/currency";
@@ -29,6 +33,9 @@ export async function startGatewayPayment(
   }
   const driver = getGatewayDriver(gatewaySlug);
   if (!driver) throw new Error("Unknown payment gateway");
+  if (!gatewayAcceptsCurrency(driver, invoice.currency)) {
+    throw new Error("Payment method does not support this invoice currency");
+  }
 
   const baseUrl = await publicUrl();
   return driver.pay(invoice, extensionConfig(extension), {

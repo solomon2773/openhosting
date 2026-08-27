@@ -36,6 +36,7 @@ then follow [Installation](getting-started/installation.md).
 - [Quotes & estimates](guides/quotes.md) — priced proposals customers accept online
 - [Contacts & sub-accounts](guides/contacts.md) — scoped additional contacts
 - [Usage-metered billing](guides/metered-billing.md) — bill by consumption
+- [Agent commerce](guides/agent-commerce.md) — delegated checkout, ACP, and x402 USDC payments
 - [Mass mail](guides/mass-mail.md) — bulk email to segments
 - [Announcements](guides/announcements.md) — the news/blog module
 - [Themes](guides/themes.md) — built-in themes and custom ones
@@ -44,8 +45,9 @@ then follow [Installation](getting-started/installation.md).
 ## Extensions
 
 - [Extensions overview](extensions/overview.md) — how the driver system works
-- [Payment gateways](extensions/payment-gateways.md) — all 19 gateways and their setup
+- [Payment gateways](extensions/payment-gateways.md) — all 20 gateways and their setup
 - [Server modules](extensions/server-modules.md) — all 27 provisioning integrations
+- [Server driver certification](extensions/server-certification.md) — disposable live lifecycle harness
 - [Resale modules](extensions/resale-modules.md) — domains, SSL, licenses, M365 seats
 - [Writing an extension](extensions/writing-extensions.md) — build your own driver
 

@@ -24,12 +24,14 @@ export type StoredMethodDetails = {
 
 // A payment gateway driver. `pay` starts a payment for an invoice and either
 // redirects the customer to the gateway or shows manual instructions.
-// The three optional `setup`/`chargeStored` members enable stored payment
-// methods and off-session auto-charging (interface segregation: simple
-// gateways skip them).
+// Optional capabilities enable stored methods, off-session auto-charging, and
+// delegated one-time credentials while simple gateways keep only `pay`.
 export interface GatewayDriver {
   slug: string;
   name: string;
+  // Omitted drivers accept conventional three-letter fiat codes. Digital
+  // asset rails declare their exact asset codes explicitly.
+  supportedCurrencies?: string[];
   configFields: ConfigField[];
   pay(
     invoice: Invoice & { user: User },
@@ -59,6 +61,23 @@ export interface GatewayDriver {
     method: StoredMethodDetails,
     config: Record<string, string>,
   ): Promise<{ transactionId: string } | null>;
+  // Charge a single-use payment credential delegated by an agent. The driver
+  // must bind the processor request to the authoritative invoice amount.
+  chargeDelegated?(
+    invoice: Invoice & { user: User },
+    token: string,
+    config: Record<string, string>,
+    idempotencyKey: string,
+  ): Promise<{ transactionId: string; status: string }>;
+}
+
+export function gatewayAcceptsCurrency(
+  driver: GatewayDriver,
+  currency: string,
+): boolean {
+  return driver.supportedCurrencies
+    ? driver.supportedCurrencies.includes(currency)
+    : /^[A-Z]{3}$/.test(currency);
 }
 
 // A server-provisioning driver (Pterodactyl, Proxmox, ...). Lifecycle hooks

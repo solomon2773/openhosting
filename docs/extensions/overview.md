@@ -42,7 +42,7 @@ The system follows a few deliberate principles:
 
 ## Reference pages
 
-- [Payment gateways](payment-gateways.md) — all 19, with setup
+- [Payment gateways](payment-gateways.md) — all 20, with setup
 - [Server modules](server-modules.md) — all 27, with setup
 - [Resale modules](resale-modules.md) — domains, SSL, licenses, seats
 - [Writing an extension](writing-extensions.md) — build your own

@@ -4,10 +4,20 @@ export function formatMoney(
   amount: number | string | { toString(): string },
   currency = "USD",
 ): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency,
-  }).format(Number(amount.toString()));
+  const numericAmount = Number(amount.toString());
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency,
+    }).format(numericAmount);
+  } catch (error) {
+    if (!(error instanceof RangeError)) throw error;
+    const formatted = new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: currency === "USDC" ? 6 : 8,
+    }).format(numericAmount);
+    return `${formatted} ${currency}`;
+  }
 }
 
 export function formatDate(date: Date | string | null | undefined): string {

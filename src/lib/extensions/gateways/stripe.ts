@@ -6,6 +6,7 @@ async function stripeRequest(
   path: string,
   params?: Record<string, string>,
   method: "POST" | "GET" = "POST",
+  idempotencyKey?: string,
 ) {
   const query =
     method === "GET" && params ? `?${new URLSearchParams(params)}` : "";
@@ -13,6 +14,7 @@ async function stripeRequest(
     method,
     headers: {
       Authorization: `Bearer ${secretKey}`,
+      ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
       ...(method === "POST"
         ? { "Content-Type": "application/x-www-form-urlencoded" }
         : {}),
@@ -128,5 +130,29 @@ export const stripeGateway: GatewayDriver = {
     });
     if (intent.status !== "succeeded") return null;
     return { transactionId: intent.id as string };
+  },
+
+  async chargeDelegated(invoice, token, config, idempotencyKey) {
+    if (!/^[A-Z]{3}$/.test(invoice.currency)) {
+      throw new Error("Stripe delegated payments require an ISO 4217 currency");
+    }
+    const intent = await stripeRequest(
+      config.secret_key,
+      "/payment_intents",
+      {
+        amount: String(Math.round(Number(invoice.total) * 100)),
+        currency: invoice.currency.toLowerCase(),
+        shared_payment_granted_token: token,
+        confirm: "true",
+        description: `Invoice #${invoice.number}`,
+        "metadata[invoice_id]": invoice.id,
+      },
+      "POST",
+      idempotencyKey,
+    );
+    return {
+      transactionId: String(intent.id),
+      status: String(intent.status),
+    };
   },
 };

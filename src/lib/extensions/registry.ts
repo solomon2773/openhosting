@@ -6,6 +6,7 @@ import type {
   ServerDriver,
   ResaleDriver,
 } from "@/lib/extensions/types";
+import { gatewayAcceptsCurrency } from "@/lib/extensions/types";
 import { stripeGateway } from "@/lib/extensions/gateways/stripe";
 import { paypalGateway } from "@/lib/extensions/gateways/paypal";
 import { mollieGateway } from "@/lib/extensions/gateways/mollie";
@@ -25,6 +26,7 @@ import { paystackGateway } from "@/lib/extensions/gateways/paystack";
 import { flutterwaveGateway } from "@/lib/extensions/gateways/flutterwave";
 import { midtransGateway } from "@/lib/extensions/gateways/midtrans";
 import { xenditGateway } from "@/lib/extensions/gateways/xendit";
+import { x402Gateway } from "@/lib/extensions/gateways/x402";
 import { pterodactylServer } from "@/lib/extensions/servers/pterodactyl";
 import { convoyServer } from "@/lib/extensions/servers/convoy";
 import { virtFusionServer } from "@/lib/extensions/servers/virtfusion";
@@ -83,6 +85,7 @@ export const GATEWAY_DRIVERS: GatewayDriver[] = [
   flutterwaveGateway,
   midtransGateway,
   xenditGateway,
+  x402Gateway,
 ];
 
 export const SERVER_DRIVERS: ServerDriver[] = [
@@ -177,9 +180,15 @@ export async function syncExtensions() {
   }
 }
 
-export async function enabledGateways() {
-  return db.extension.findMany({
+export async function enabledGateways(currency?: string) {
+  const enabled = await db.extension.findMany({
     where: { type: "GATEWAY", enabled: true },
     orderBy: { name: "asc" },
   });
+  return currency
+    ? enabled.filter((extension) => {
+        const driver = getGatewayDriver(extension.slug);
+        return driver ? gatewayAcceptsCurrency(driver, currency) : false;
+      })
+    : enabled;
 }
