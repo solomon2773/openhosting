@@ -26,9 +26,10 @@ structured results it can reason over.
 
 ## Setup
 
-The server needs a base URL and an API key (create one under
-**Admin → API keys**). It runs over stdio, launched by the MCP client with
-environment variables.
+OpenHosting supports two transports:
+
+- local **stdio**, authenticated with an API key; and
+- hosted **Streamable HTTP** at `/api/mcp`, authenticated through OAuth 2.1.
 
 ### Claude Desktop / Claude Code
 
@@ -57,6 +58,29 @@ Restart the client; the OpenHosting tools appear in its tool list.
 Launch `node mcp/server.mjs` with the same environment variables. It speaks MCP
 over stdio (stdout is the protocol channel; logs go to stderr).
 
+### Remote Streamable HTTP
+
+1. Under **Admin → OAuth clients**, create a public PKCE client (or a
+   confidential client when your MCP client can protect a secret).
+2. Register the MCP client's exact redirect URI.
+3. Allow only the `mcp:tool:<tool_name>` scopes it needs. For example, a
+   read-only customer lookup client might receive
+   `mcp:tool:list_users mcp:tool:get_user`.
+4. Configure the client with `https://your-host/api/mcp`.
+
+The unauthenticated endpoint returns a `WWW-Authenticate` challenge pointing to
+OAuth Protected Resource Metadata. Discovery documents are available at:
+
+- `/.well-known/oauth-protected-resource`
+- `/.well-known/oauth-protected-resource/api/mcp`
+- `/.well-known/oauth-authorization-server`
+
+Remote authorization requires S256 PKCE. MCP tokens are audience-bound to the
+canonical `/api/mcp` resource, expire after one hour, and include a rotating
+30-day refresh token. The HTTP server is stateless and returns JSON for ordinary
+tool calls; it validates any browser `Origin` against the configured public
+origin plus `MCP_ALLOWED_ORIGINS`.
+
 ## Example prompts
 
 Once connected, you can ask the assistant things like:
@@ -70,10 +94,11 @@ Once connected, you can ask the assistant things like:
 
 ## Permissions & safety
 
-The server can only do what its API key's [scopes](api/rest-api.md) permit —
-give it a read-only key to let an assistant investigate without being able to
-change anything, or a scoped write key for the specific operations you want to
-automate.
+The stdio server can only do what its API key's [scopes](api/rest-api.md)
+permit. Remote clients have a narrower boundary: only tools whose exact
+`mcp:tool:<name>` scopes were approved are registered for that request, and the
+same token cannot use a sibling REST operation that shares a broader domain
+permission.
 
 Destructive tools (`service_action` with `terminate`, `mark_invoice_paid`)
 carry warnings in their descriptions so the assistant treats them carefully, but

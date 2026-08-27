@@ -16,19 +16,33 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { pathToFileURL } from "node:url";
 import { z } from "zod";
 import { OpenHostingClient } from "../cli/client.mjs";
 
-const client = new OpenHostingClient();
+/**
+ * Build one MCP server for either stdio or an authenticated HTTP request.
+ * @param {{ url?: string, apiToken?: string, cronSecret?: string, allowedTools?: string[] }} [options]
+ */
+export function createOpenHostingMcpServer(options = {}) {
+const client = new OpenHostingClient({
+  url: options.url,
+  apiKey: options.apiToken,
+  cronSecret: options.cronSecret,
+});
+const allowedTools = options.allowedTools
+  ? new Set(options.allowedTools)
+  : null;
 
 const server = new McpServer({
   name: "openhosting",
-  version: "0.3.0",
+  version: "0.6.0",
 });
 
 // Wrap a client call so its JSON result becomes MCP text content, and errors
 // become a readable tool error instead of crashing the connection.
 function tool(name, config, fn) {
+  if (allowedTools && !allowedTools.has(name)) return;
   server.registerTool(name, config, async (args) => {
     try {
       const result = await fn(args ?? {});
@@ -205,8 +219,17 @@ tool("run_billing_cron", {
   inputSchema: {},
 }, () => client.runCron());
 
+return server;
+}
+
 // ── Start ────────────────────────────────────────────────────────────────────
-const transport = new StdioServerTransport();
-await server.connect(transport);
-// stderr is safe for logs (stdout is the MCP channel)
-console.error("OpenHosting MCP server running on stdio.");
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
+  const server = createOpenHostingMcpServer();
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  // stderr is safe for logs (stdout is the MCP channel)
+  console.error("OpenHosting MCP server running on stdio.");
+}

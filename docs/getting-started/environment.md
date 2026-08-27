@@ -22,6 +22,7 @@ currency and SMTP is configured in the admin panel instead — see
 | `ATTACHMENT_S3_FORCE_PATH_STYLE` | | `true` for providers such as a local MinIO deployment that require path-style bucket URLs. |
 | `ATTACHMENT_S3_PREFIX` | | Object-key prefix. Defaults to `attachments`. |
 | `ATTACHMENT_S3_DOWNLOAD_TTL_SECONDS` | | Signed download lifetime from 60 to 604800 seconds. Defaults to 300. |
+| `MCP_ALLOWED_ORIGINS` | | Comma-separated extra browser origins allowed to call `/api/mcp`. Non-browser clients normally omit `Origin`. |
 | `PORT` | | Port the server listens on (default `3000`). |
 | `NODE_ENV` | | Set to `production` in production (the image sets this). |
 | `SHADOW_DATABASE_URL` | | Only for generating new migrations locally — a spare database Prisma uses as a shadow. |

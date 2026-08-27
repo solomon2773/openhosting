@@ -3,6 +3,13 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sha256 } from "@/lib/auth";
 import type { ApiKey, User } from "@/generated/prisma/client";
+import { authenticateOauthToken } from "@/lib/oauth";
+import {
+  canonicalMcpResource,
+  mcpToolForApiRequest,
+  mcpToolScope,
+} from "@/lib/oauth-policy";
+import { publicUrl } from "@/lib/settings";
 
 // Authenticates /api/v1 requests via `Authorization: Bearer oh_<key>`.
 export async function authenticateApiKey(
@@ -32,6 +39,33 @@ export function unauthorized() {
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 }
 
+type ApiPrincipal = {
+  kind: "api_key" | "oauth";
+  user: User;
+  key: (ApiKey & { user: User }) | null;
+};
+
+async function authenticateApiPrincipal(
+  request: Request,
+  permission: string,
+): Promise<ApiPrincipal | null> {
+  const key = await authenticateApiKey(request);
+  if (key && apiKeyHasPermission(key, permission)) {
+    return { kind: "api_key", user: key.user, key };
+  }
+
+  const resource = canonicalMcpResource(await publicUrl());
+  const token = await authenticateOauthToken(request, resource);
+  const tool = mcpToolForApiRequest(
+    request.method,
+    new URL(request.url).pathname,
+  );
+  if (!token || !tool || !token.scopes.includes(mcpToolScope(tool))) {
+    return null;
+  }
+  return { kind: "oauth", user: token.user, key: null };
+}
+
 export function notFoundJson() {
   return NextResponse.json({ error: "Not found" }, { status: 404 });
 }
@@ -41,16 +75,16 @@ export function withApiKey(
   permission: string,
   handler: (
     request: Request,
-    context: { key: ApiKey & { user: User }; params: Record<string, string> },
+    context: { principal: ApiPrincipal; params: Record<string, string> },
   ) => Promise<Response>,
 ) {
   return async (
     request: Request,
     routeContext: { params: Promise<Record<string, string>> },
   ): Promise<Response> => {
-    const key = await authenticateApiKey(request);
-    if (!key || !apiKeyHasPermission(key, permission)) return unauthorized();
+    const principal = await authenticateApiPrincipal(request, permission);
+    if (!principal) return unauthorized();
     const params = await routeContext.params;
-    return handler(request, { key, params });
+    return handler(request, { principal, params });
   };
 }
