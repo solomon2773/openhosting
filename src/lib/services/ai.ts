@@ -4,6 +4,10 @@ import { getAiDriver } from "@/lib/extensions/registry";
 import { extensionConfig } from "@/lib/extensions/types";
 import type { AiMessage } from "@/lib/extensions/types";
 import { getSetting, getSettings } from "@/lib/settings";
+import {
+  parseGroundedAutoResolution,
+  type GroundedAutoResolution,
+} from "@/lib/ai-policy";
 
 /**
  * AI support features.
@@ -47,28 +51,45 @@ export async function aiReplyDraftsEnabled(): Promise<boolean> {
   return aiConfigured();
 }
 
+type KnowledgebaseArticle = { id: string; title: string; body: string };
+
 /** Published articles only — unpublished drafts are not company policy yet. */
-async function knowledgebaseContext(limit = 40): Promise<string> {
-  const articles = await db.kbArticle.findMany({
+async function publishedKnowledgebaseArticles(
+  limit = 40,
+): Promise<KnowledgebaseArticle[]> {
+  return db.kbArticle.findMany({
     where: { published: true },
-    select: { title: true, body: true },
+    select: { id: true, title: true, body: true },
     orderBy: { updatedAt: "desc" },
     take: limit,
   });
+}
+
+function formatKnowledgebase(articles: KnowledgebaseArticle[]): string {
   if (articles.length === 0) return "(The knowledgebase is empty.)";
   return articles
-    .map((a) => `## ${a.title}\n${a.body.slice(0, 4000)}`)
+    .map(
+      (article) =>
+        `## ${article.title} [article_id=${article.id}]\n${article.body.slice(0, 4000)}`,
+    )
     .join("\n\n");
 }
 
+async function knowledgebaseContext(limit = 40): Promise<string> {
+  return formatKnowledgebase(await publishedKnowledgebaseArticles(limit));
+}
+
 function threadMessages(
-  messages: { message: string; userId: string }[],
+  messages: { message: string; userId: string; isAiGenerated?: boolean }[],
   customerId: string,
 ): AiMessage[] {
   // The customer speaks as "user"; staff replies are the assistant's own past
   // turns, which is exactly the shape a chat model expects.
   return messages.map((m) => ({
-    role: m.userId === customerId ? ("user" as const) : ("assistant" as const),
+    role:
+      m.userId === customerId && !m.isAiGenerated
+        ? ("user" as const)
+        : ("assistant" as const),
     content: m.message,
   }));
 }
@@ -86,7 +107,10 @@ export async function draftTicketReply(ticketId: string): Promise<string | null>
     where: { id: ticketId },
     include: {
       user: { select: { id: true, firstName: true } },
-      messages: { orderBy: { createdAt: "asc" }, select: { message: true, userId: true } },
+      messages: {
+        orderBy: { createdAt: "asc" },
+        select: { message: true, userId: true, isAiGenerated: true },
+      },
     },
   });
   if (!ticket) return null;
@@ -187,4 +211,116 @@ export async function triageTicket(ticketId: string): Promise<Triage | null> {
   }
   if (result.confidence < threshold) return null;
   return result as Triage;
+}
+
+export async function autoResolveTicket(
+  ticketId: string,
+): Promise<GroundedAutoResolution | null> {
+  if ((await getSetting("ai_auto_resolve")) !== "true") return null;
+  const provider = await activeProvider();
+  if (!provider?.driver.completeJson) return null;
+
+  const [ticket, articles, staff] = await Promise.all([
+    db.ticket.findUnique({
+      where: { id: ticketId },
+      include: {
+        messages: {
+          orderBy: { createdAt: "asc" },
+          take: 1,
+          select: { message: true },
+        },
+      },
+    }),
+    publishedKnowledgebaseArticles(),
+    db.user.findFirst({
+      where: { roleId: { not: null } },
+      orderBy: { createdAt: "asc" },
+      select: { id: true },
+    }),
+  ]);
+  if (!ticket || ticket.status !== "OPEN" || ticket.priority === "HIGH") {
+    return null;
+  }
+  if (!staff || articles.length === 0) return null;
+
+  const configuredThreshold = Number(
+    await getSetting("ai_auto_resolve_min_confidence"),
+  );
+  const threshold =
+    Number.isFinite(configuredThreshold) &&
+    configuredThreshold >= 0 &&
+    configuredThreshold <= 1
+      ? configuredThreshold
+      : 0.92;
+  const schema = {
+    type: "object",
+    properties: {
+      answer: { type: "string" },
+      confidence: { type: "number" },
+      requiresHuman: { type: "boolean" },
+      sourceArticleIds: { type: "array", items: { type: "string" } },
+    },
+    required: [
+      "answer",
+      "confidence",
+      "requiresHuman",
+      "sourceArticleIds",
+    ],
+    additionalProperties: false,
+  };
+  const system = [
+    "Decide whether a newly opened hosting support ticket can be fully answered from the published knowledgebase.",
+    "Set requiresHuman=true for account changes, refunds, billing disputes, outages, security issues, abuse, uncertain diagnoses, missing facts, or any request that needs an external action.",
+    "Only set requiresHuman=false when the answer is static tier-1 guidance stated directly in the articles.",
+    "When answering, do not claim that any action was performed. Match the customer's language.",
+    "sourceArticleIds must contain every article used and may contain only the article_id values shown below.",
+    "confidence is 0 to 1. Be conservative because a qualifying answer will be posted automatically and close the ticket.",
+    "Answer as JSON only.",
+    "",
+    "# Published knowledgebase",
+    formatKnowledgebase(articles),
+  ].join("\n");
+  const raw = await provider.driver.completeJson(provider.config, {
+    system,
+    maxTokens: 4_000,
+    schema,
+    messages: [
+      {
+        role: "user",
+        content: `Subject: ${ticket.subject}\nDepartment: ${ticket.department}\nPriority: ${ticket.priority}\n\n${ticket.messages[0]?.message ?? ""}`.slice(
+          0,
+          8_000,
+        ),
+      },
+    ],
+  });
+  const resolution = parseGroundedAutoResolution(
+    raw,
+    threshold,
+    new Set(articles.map((article) => article.id)),
+  );
+  if (!resolution) return null;
+
+  const applied = await db.$transaction(async (tx) => {
+    const closed = await tx.ticket.updateMany({
+      where: {
+        id: ticket.id,
+        status: "OPEN",
+        updatedAt: ticket.updatedAt,
+      },
+      data: { status: "CLOSED" },
+    });
+    if (closed.count !== 1) return false;
+    await tx.ticketMessage.create({
+      data: {
+        ticketId: ticket.id,
+        userId: staff.id,
+        message: resolution.answer,
+        isAiGenerated: true,
+      },
+    });
+    return true;
+  });
+
+  return applied ? resolution : null;
 }

@@ -583,14 +583,15 @@ model Ticket {
 }
 
 model TicketMessage {
-  id          String             @id @default(cuid())
-  ticketId    String
-  ticket      Ticket             @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  userId      String
-  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  message     String
-  attachments TicketAttachment[]
-  createdAt   DateTime           @default(now())
+  id            String             @id @default(cuid())
+  ticketId      String
+  ticket        Ticket             @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message       String
+  isAiGenerated Boolean            @default(false)
+  attachments   TicketAttachment[]
+  createdAt     DateTime           @default(now())
 }
 
 // Database storage remains the default; S3-compatible storage keeps only a key.

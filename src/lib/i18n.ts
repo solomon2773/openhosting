@@ -118,6 +118,8 @@ const en = {
   "ticket.closed": "This ticket is closed.",
   "ticket.attachments": "Attachments (up to 3 files, 5 MB each)",
   "ticket.staff": "Staff",
+  "ticket.aiSupport": "AI support",
+  "ticket.automated": "Automated",
   "ticket.you": "(you)",
 
   "account.title": "Account settings",
