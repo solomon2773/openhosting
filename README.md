@@ -3,8 +3,8 @@
 # 🚀 OpenHosting
 
 **Open-source billing and client management for hosting providers.**<br />
-Storefront, recurring billing, provisioning, product resale, and support in one
-self-hosted application.
+Storefront, recurring billing, provisioning, support, and agent-native commerce
+in one self-hosted application.
 
 [![CI](https://img.shields.io/badge/CI-GitHub_Actions-2088FF?logo=githubactions&logoColor=white)](.github/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -19,6 +19,7 @@ self-hosted application.
 ## Contents
 
 - [What OpenHosting includes](#what-openhosting-includes)
+- [Agent commerce, built in](#agent-commerce-built-in)
 - [Technology stack](#technology-stack)
 - [How the application is structured](#how-the-application-is-structured)
 - [Core business flows](#core-business-flows)
@@ -42,6 +43,11 @@ billing, infrastructure provisioning, customer accounts, and support tooling.
 OpenHosting keeps those concerns in one TypeScript application backed by
 PostgreSQL. It can sell game servers, VPS and web hosting, as well as domains,
 SSL certificates, software licenses, and productivity-suite seats.
+
+The same catalog can serve human customers and autonomous buyers. Agents can
+discover products, receive bounded purchasing authority from an existing
+customer, create an order through a native API or ACP, and pay an exact USDC
+invoice through x402 without creating a second commerce or provisioning stack.
 
 The application has four primary surfaces:
 
@@ -122,6 +128,58 @@ transfer method created by the development seed.
 - WHMCS and Paymenter import scripts.
 - Six runtime-selectable themes and five included locales: English, Dutch,
   French, German, and Spanish.
+
+## Agent commerce, built in
+
+> **Build the hosting product once. Sell it through the storefront, an AI
+> agent, or a machine-to-machine workflow using the same price, invoice,
+> fraud, payment, and provisioning engine.**
+
+OpenHosting treats autonomous purchasing as a first-class channel rather than
+an unscoped API key bolted onto checkout:
+
+- **AI-readable discovery.** `/.well-known/agent-commerce` advertises a public
+  catalog containing stable SKUs, billing cycles, configuration choices,
+  availability, metered pricing, currencies, precision, settlement networks,
+  and supported checkout protocols.
+- **Delegated purchasing authority.** A customer can issue an expiring agent
+  grant restricted to exact products and currencies, with both a maximum order
+  value and a cumulative spend ceiling. The bearer credential is displayed
+  once, stored only as a hash, auditable, and immediately revocable.
+- **Idempotent native checkout.** Agents can place orders through JSON without
+  risking duplicate infrastructure. OpenHosting reloads stock, prices, options,
+  coupons, tax, fraud policy, currency rates, and grant limits before creating
+  the normal order, service, and invoice records.
+- **Agentic Commerce Protocol.** The versioned ACP checkout-session adapter
+  supports cart creation, retrieval, updates, completion, and cancellation,
+  with delegated fiat payment through Stripe Shared Payment Tokens.
+- **USDC machine payments.** The x402 v2 gateway issues exact six-decimal USDC
+  requirements, binds signed payment terms to one invoice and URL, verifies and
+  settles through a configured facilitator, and prevents transaction replay.
+- **Metered autonomous infrastructure.** Usage records retain sub-cent
+  precision and settle in the service's locked currency, supporting
+  pay-per-request, pay-per-hour, bandwidth, storage, and compute resale models.
+- **One operational ledger.** Agent orders use the existing invoices, payment
+  records, fraud review, audit log, lifecycle automation, and provisioning
+  drivers. Operators do not reconcile a separate agent-commerce backend.
+
+```text
+agent discovers catalog
+  → customer grants bounded authority
+  → native checkout or ACP session
+  → fiat via Stripe SPT or USDC via x402
+  → normal OpenHosting invoice, service lifecycle, and provisioning
+```
+
+This foundation is designed for autonomous deployment assistants, AI
+infrastructure marketplaces, usage-based compute sellers, hosting resellers,
+and internal agents that purchase within a customer-approved budget. Anonymous
+autonomous account creation is intentionally later on the roadmap; current
+grants remain anchored to an existing customer and its identity, recovery,
+fraud, and compliance controls.
+
+See the [agent commerce guide](docs/guides/agent-commerce.md) for API examples,
+security boundaries, ACP requirements, and x402 deployment guidance.
 
 ## Technology stack
 
