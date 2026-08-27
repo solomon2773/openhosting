@@ -35,6 +35,9 @@ in one self-hosted application.
 - [Deployment](#deployment)
 - [Development conventions](#development-conventions)
 - [Documentation](#documentation)
+- [Contributing](#contributing)
+- [License](#license)
+- [Roadmap](#roadmap)
 
 ## What is OpenHosting?
 
@@ -744,3 +747,164 @@ are intended to be narrowly scoped.
 ## License
 
 [MIT](LICENSE) — free for personal and commercial use.
+
+## Roadmap
+
+OpenHosting's long-term goal is a hosting business that can serve both humans
+and software agents with minimal human involvement. An authorized agent should
+be able to discover a product, establish an account, prove control of its
+identity, obtain a quote, pay, receive infrastructure, manage its lifecycle,
+and resolve routine failures without opening a browser or waiting for an
+operator. Humans define policy and handle exceptions; they should not have to
+approve every normal action.
+
+The detailed and independently updateable roadmap is also available in
+[docs/roadmap.md](docs/roadmap.md). Ordering may change as protocols and legal
+requirements mature, but the safety properties below are release gates rather
+than optional follow-up work.
+
+### The autonomous customer journey
+
+| Stage | Target machine-to-machine behavior | Human involvement |
+|---|---|---|
+| Discover | Read products, capacity, price, settlement assets, regions, and policy requirements from a versioned catalog | None |
+| Enroll | Register an agent principal, prove control of a public key or workload identity, and establish a policy-bounded account | Only when operator policy requires identity review |
+| Purchase | Reserve capacity, receive an authoritative quote, pay with delegated fiat or self-funded USDC, and create an idempotent order | Only for a policy exception or high-risk order |
+| Provision | Track the workflow to completion and receive credentials encrypted to the agent's registered key | Only after retries and automated remediation are exhausted |
+| Operate | Renew, resize, reinstall, rotate credentials, manage backups and DNS, inspect usage, and request support through API or MCP | Exception queue only |
+| Exit or recover | Cancel, export data, receive eligible refunds, rotate a lost key, or transfer control under a predeclared recovery policy | Disputes and contested ownership only |
+
+### Phase A — commerce foundation (shipped in v0.6)
+
+- Machine-readable catalog and discovery documents.
+- Scoped agent grants with product, currency, expiry, per-order, and cumulative
+  spending limits.
+- Idempotent native checkout, ACP checkout sessions, and exact USDC settlement
+  through x402 v2.
+- Durable settlement records, metered billing, provisioning workflows, audit
+  trails, remote MCP, and tool-level OAuth scopes.
+- AI-assisted support with confidence gates and a human escalation path.
+
+This phase deliberately requires an existing customer to create the agent
+grant. It proves delegated purchasing before OpenHosting removes the
+pre-existing human account requirement.
+
+### Phase B — autonomous identity and account creation (target: v0.7)
+
+- Introduce a first-class agent principal and an enrollment API that does not
+  require email, password, browser cookies, or a pre-existing human login.
+- Authenticate enrollment with a signed nonce and registered public key.
+  Support adapters for OAuth client credentials and workload identities, with
+  optional [W3C DID](https://www.w3.org/TR/did/) and
+  [SPIFFE](https://spiffe.io/docs/latest/spiffe/concepts/) verification rather
+  than hard-coding one identity vendor.
+- Allow anonymous or pseudonymous accounts when the operator's product,
+  jurisdiction, network, and risk policy permits them. Collect identity data
+  only when a configured provider or legal rule requires it.
+- Attach an operator-defined capability profile at enrollment: allowed
+  products, regions, networks, concurrent services, rate limits, maximum
+  exposure, and account lifetime.
+- Build proof-of-control key rotation, multiple active keys, revocation,
+  recovery guardians, ownership transfer, and inactivity succession. Losing a
+  workload must not permanently strand the account or let a new workload seize
+  it.
+- Add progressive trust levels so a new anonymous principal begins with low
+  limits and earns more capacity through successful payment and service
+  history without manual review of every order.
+
+### Phase C — autonomous treasury and purchasing (target: v0.8)
+
+- Add signed, expiring quotes and capacity reservations so an agent knows the
+  exact price and availability before authorizing payment.
+- Support self-funded wallets, prepaid balances, delegated fiat instruments,
+  and operator-issued credits through one asset-aware ledger. Private keys
+  always remain outside OpenHosting.
+- Add standing budget policies for renewals, usage bursts, and emergency
+  remediation. A policy decision replaces per-purchase approval while retaining
+  hard ceilings and an emergency stop.
+- Model authorization, settlement finality, expiration, underpayment,
+  overpayment, refunds, chargebacks, and blockchain reorganization explicitly.
+  Refunds return through a verified route instead of accepting an arbitrary
+  address supplied after payment.
+- Connect checkout, payment, provisioning, and notification through durable
+  workflow state and an outbox so crashes can be replayed without duplicated
+  charges or servers.
+- Publish signed lifecycle events and webhooks for quote, payment, invoice,
+  service, usage, and policy changes. Agents should react to state changes
+  instead of polling every endpoint.
+
+### Phase D — autonomous service management (target: v0.9)
+
+- Expose the complete safe service lifecycle through REST and MCP: renew,
+  upgrade, downgrade, resize, reinstall, restart, cancel, snapshot, restore,
+  rotate credentials, manage DNS, and inspect usage.
+- Deliver initial and rotated secrets encrypted to the registered agent key or
+  an operator-configured secret manager. Secrets must never be copied into a
+  model prompt, audit record, or webhook payload.
+- Add balance forecasting, renewal simulation, automatic top-up requests,
+  budget-aware scaling, and graceful downgrade or shutdown policies before
+  funds run out.
+- Turn provisioning certification into continuous provider health scoring,
+  automatic failover, bounded retry, and diagnosed escalation.
+- Let the support agent gather logs, run approved diagnostics, apply reversible
+  remediations, and escalate a complete case when confidence or policy blocks
+  further action.
+- Give agents portable receipts, invoices, usage evidence, and service export
+  data so they can reconcile every decision and leave without operator help.
+
+### Phase E — multi-agent operations and governance (v1.0 candidate)
+
+- Support attenuated delegation: an account agent can create a narrower,
+  short-lived capability for a purchasing, operations, or support sub-agent,
+  but can never delegate more authority than it owns.
+- Add organizations, machine roles, approval policies, quorum controls, and
+  treasury separation for teams of agents managing shared infrastructure.
+- Build a policy simulator and dry-run mode that explains whether an action
+  would be allowed, its maximum cost, and which rule would block it before any
+  real payment or provisioning occurs.
+- Add pluggable compliance, sanctions, tax, fraud, and provider-acceptable-use
+  checks. These controls should return structured requirements that an agent
+  can satisfy automatically when possible and route only genuine exceptions
+  to a person.
+- Add privacy-preserving reputation and optional verifiable attestations for
+  payment history, abuse history, and workload ownership without making a
+  public identity mandatory.
+- Provide operator kill switches, per-agent quarantine, transaction tracing,
+  tamper-evident audit exports, and incident replay.
+
+### Additional roadmap tracks
+
+- **Reliability without an operator:** high availability, queue visibility,
+  automated database backups, restore drills, disaster recovery, and safe
+  upgrade/rollback workflows.
+- **Agent-friendly infrastructure:** DNS, object storage, backup, GPU, network,
+  and secrets-manager drivers with the same certification contract as server
+  providers.
+- **Economic observability:** per-agent margin, settlement cost, usage forecast,
+  failed-purchase reasons, support cost, and autonomy-rate dashboards.
+- **Protocol conformance:** executable ACP, x402, MCP, OAuth, identity, and event
+  compatibility suites so integrations do not drift as standards evolve.
+- **Federated discovery:** signed provider capability documents and portable
+  service offers so an agent can compare OpenHosting installations without a
+  proprietary marketplace.
+- **Autonomy evaluations:** adversarial simulations for overspending, prompt
+  injection, replay, compromised keys, provider failure, payment reorgs, and
+  runaway remediation before higher autonomy levels can be enabled.
+
+### Definition of done for autonomous accounts
+
+Anonymous autonomous accounts will be considered production-ready only when:
+
+1. A clean machine client can discover OpenHosting, create a bounded account,
+   pay with USDC, provision a service, and retrieve encrypted access without a
+   human or browser.
+2. The same account can renew, resize, recover a key, request support, and
+   cancel through documented APIs with idempotent retries.
+3. Concurrent agents cannot exceed account, order, product, or treasury limits,
+   even during retries, worker crashes, or partial payment failures.
+4. Every decision, delegation, payment, and lifecycle transition is attributable
+   to a principal and exportable without exposing secrets.
+5. Operators can choose where human review is mandatory, but the default
+   low-risk path completes automatically and sends exceptions to one queue.
+6. Recovery, refunds, suspension, and safe shutdown work even when the original
+   agent runtime is permanently unavailable.
